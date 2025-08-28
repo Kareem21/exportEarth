@@ -23,41 +23,107 @@ npm install 3d-earth-module
 
 ## Quick Start
 
-```jsx
-import React, { useState, useEffect } from 'react';
-import EarthModule from '3d-earth-module';
+```jsx import { useEffect, useRef, useState } from 'react';
 
-const SIEMDashboard = () => {
-  const containerRef = useRef();
-  const [attackData, setAttackData] = useState([]);
+  function Earth() {
+    const canvasRef = useRef(null);
+    const [EarthModule, setEarthModule] = useState(null);
+    const [earthInstance, setEarthInstance] = useState(null);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Initialize Earth
-    EarthModule.init({
-      dom: containerRef.current,
-      attackData: [
-        {
-          startArray: {
-            name: 'Dubai',
-            N: 25.2048, // Latitude
-            E: 55.2708, // Longitude
-          },
-          endArray: [
-            {
-              name: 'Russia',
-              N: 61.52401,
-              E: 105.318756,
-            }
-          ]
+    useEffect(() => {
+      // Dynamic import to ensure module loads properly
+      const loadEarthModule = async () => {
+        try {
+          const module = await import('../dist/index.js');
+          // Use the class, not the singleton instance
+          setEarthModule(() => module.EarthModule);
+        } catch (err) {
+          console.error('Failed to load Earth module:', err);
+          setError('Failed to load 3D Earth module');
         }
-      ]
-    });
+      };
 
-    return () => EarthModule.destroy();
-  }, []);
+      loadEarthModule();
+    }, []);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '500px' }} />;
-};
+    useEffect(() => {
+      if (!EarthModule || !canvasRef.current) return;
+
+      const initEarth = async () => {
+        try {
+          // Create a new instance of the EarthModule class
+          const instance = new EarthModule();
+
+          await instance.init({
+            dom: canvasRef.current,
+            attackData: [
+              {
+                startArray: {
+                  name: 'New York',
+                  N: 40.7128,
+                  E: -74.0060,
+                },
+                endArray: [{
+                  name: 'London',
+                  N: 51.5074,
+                  E: -0.1278,
+                }]
+              }
+            ],
+            earth: {
+              radius: 50,
+              rotateSpeed: 0.002,
+              isRotation: true
+            }
+          });
+
+          setEarthInstance(instance);
+        } catch (error) {
+          console.error('Failed to initialize Earth:', error);
+          setError('Failed to initialize 3D Earth');
+        }
+      };
+
+      initEarth();
+
+      return () => {
+        if (earthInstance) {
+          earthInstance.destroy();
+          setEarthInstance(null);
+        }
+      };
+    }, [EarthModule]); // Remove earthInstance from dependencies to avoid cleanup loop
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        if (earthInstance) {
+          earthInstance.destroy();
+        }
+      };
+    }, [earthInstance]);
+
+    if (error) {
+      return <div>Error: {error}</div>;
+    }
+
+    return (
+      <div style={{ width: '100%', height: '100vh', background: 'black' }}>
+        <div 
+          ref={canvasRef} 
+          id="earth-canvas" 
+          style={{ 
+            width: '100%', 
+            height: '100%',
+          }} 
+        />
+      </div>
+    );
+  }
+
+  export default Earth;
+
 ```
 
 ## API Reference
@@ -191,95 +257,3 @@ The module requires texture assets to be available at:
 ## License
 
 MIT License
-
-
-
- import { useEffect, useRef, useState } from 'react';
-
-  function Earth() {
-    const canvasRef = useRef(null);
-    const [EarthModule, setEarthModule] = useState(null);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-      // Dynamic import to ensure module loads properly
-      const loadEarthModule = async () => {
-        try {
-          const module = await import('../dist/index.js');
-          setEarthModule(module.EarthModule || module.default);
-        } catch (err) {
-          console.error('Failed to load Earth module:', err);
-          setError('Failed to load 3D Earth module');
-        }
-      };
-
-      loadEarthModule();
-    }, []);
-
-    useEffect(() => {
-      if (!EarthModule || !canvasRef.current) return;
-
-      const initEarth = async () => {
-        try {
-          // Small delay to ensure DOM is fully ready
-          setTimeout(async () => {
-            if (canvasRef.current) {
-              await EarthModule.init({
-                dom: canvasRef.current,
-                attackData: [
-                  {
-                    startArray: {
-                      name: 'New York',
-                      N: 40.7128,
-                      E: -74.0060,
-                    },
-                    endArray: [{
-                      name: 'London',
-                      N: 51.5074,
-                      E: -0.1278,
-                    }]
-                  }
-                ],
-                earth: {
-                  radius: 50,
-                  rotateSpeed: 0.002,
-                  isRotation: true
-                }
-              });
-            }
-          }, 100);
-        } catch (error) {
-          console.error('Failed to initialize Earth:', error);
-          setError('Failed to initialize 3D Earth');
-        }
-      };
-
-      initEarth();
-
-      return () => {
-        if (EarthModule) {
-          EarthModule.destroy();
-        }
-      };
-    }, [EarthModule]);
-
-    if (error) {
-      return <div>Error: {error}</div>;
-    }
-
-    return (
-      <div style={{ width: '100%', height: '100vh', background: 'black' }}>
-        <div 
-          ref={canvasRef} 
-          id="earth-canvas" 
-          style={{ 
-            width: '100%', 
-            height: '100%',
-          }} 
-        />
-      </div>
-    );
-  }
-
-  export default Earth;
-
