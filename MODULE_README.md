@@ -191,3 +191,95 @@ The module requires texture assets to be available at:
 ## License
 
 MIT License
+
+
+
+ import { useEffect, useRef, useState } from 'react';
+
+  function Earth() {
+    const canvasRef = useRef(null);
+    const [EarthModule, setEarthModule] = useState(null);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      // Dynamic import to ensure module loads properly
+      const loadEarthModule = async () => {
+        try {
+          const module = await import('../dist/index.js');
+          setEarthModule(module.EarthModule || module.default);
+        } catch (err) {
+          console.error('Failed to load Earth module:', err);
+          setError('Failed to load 3D Earth module');
+        }
+      };
+
+      loadEarthModule();
+    }, []);
+
+    useEffect(() => {
+      if (!EarthModule || !canvasRef.current) return;
+
+      const initEarth = async () => {
+        try {
+          // Small delay to ensure DOM is fully ready
+          setTimeout(async () => {
+            if (canvasRef.current) {
+              await EarthModule.init({
+                dom: canvasRef.current,
+                attackData: [
+                  {
+                    startArray: {
+                      name: 'New York',
+                      N: 40.7128,
+                      E: -74.0060,
+                    },
+                    endArray: [{
+                      name: 'London',
+                      N: 51.5074,
+                      E: -0.1278,
+                    }]
+                  }
+                ],
+                earth: {
+                  radius: 50,
+                  rotateSpeed: 0.002,
+                  isRotation: true
+                }
+              });
+            }
+          }, 100);
+        } catch (error) {
+          console.error('Failed to initialize Earth:', error);
+          setError('Failed to initialize 3D Earth');
+        }
+      };
+
+      initEarth();
+
+      return () => {
+        if (EarthModule) {
+          EarthModule.destroy();
+        }
+      };
+    }, [EarthModule]);
+
+    if (error) {
+      return <div>Error: {error}</div>;
+    }
+
+    return (
+      <div style={{ width: '100%', height: '100vh', background: 'black' }}>
+        <div 
+          ref={canvasRef} 
+          id="earth-canvas" 
+          style={{ 
+            width: '100%', 
+            height: '100%',
+          }} 
+        />
+      </div>
+    );
+  }
+
+  export default Earth;
+
