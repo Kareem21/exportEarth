@@ -6,8 +6,8 @@ export default [{
   },
   endArray: [{
       name: '曼谷',
-      N: 22, //维度
-      E: 100.49074172973633, //经度
+      N: 22, // Latitude
+      E: 100.49074172973633, // Longitude
     },
     {
       name: '澳大利亚',
@@ -56,8 +56,8 @@ export default [{
   },
   endArray: [{
       name: '西藏',
-      N: 29.660361, //维度
-      E: 91.132212 //经度
+      N: 29.660361, // Latitude
+      E: 91.132212 // Longitude
     },
     {
       name: '广西',

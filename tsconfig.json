@@ -1,14 +1,18 @@
 {
   "include": [
-      "src/ts/**/*"
+      "src/**/*"
   ],
   "compilerOptions": {
       "module": "ESNext",
-      "target": "ESNext",
+      "target": "ES2015",
       "moduleResolution": "node",
       "declaration": true,
-      "declarationDir": "build/types",
+      "declarationDir": "dist",
+      "outDir": "dist",
       "baseUrl": ".",
-      "noImplicitAny": false
+      "noImplicitAny": false,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "strict": false
   }
 }

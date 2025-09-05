@@ -16,8 +16,8 @@ import { flyArc } from "../Utils/arc";
 export type punctuation = {
   circleColor: number,
   lightColumn: {
-    startColor: number, // 起点颜色
-    endColor: number, // 终点颜色
+    startColor: number, // Start point color
+    endColor: number, // End point color
   },
 }
 
@@ -25,33 +25,33 @@ type options = {
   data: {
     startArray: {
       name: string,
-      E: number, // 经度
-      N: number, // 维度
+      E: number, // Longitude
+      N: number, // Latitude
     },
     endArray: {
       name: string,
-      E: number, // 经度
-      N: number, // 维度
+      E: number, // Longitude
+      N: number, // Latitude
     }[]
   }[]
   dom: HTMLElement,
-  textures: Record<string, Texture>, // 贴图
+  textures: Record<string, Texture>, // Textures
   earth: {
-    radius: number, // 地球半径
-    rotateSpeed: number, // 地球旋转速度
-    isRotation: boolean // 地球组是否自转
+    radius: number, // Earth radius
+    rotateSpeed: number, // Earth rotation speed
+    isRotation: boolean // Whether earth group rotates
   }
   satellite: {
-    show: boolean, // 是否显示卫星
-    rotateSpeed: number, // 旋转速度
-    size: number, // 卫星大小
-    number: number, // 一个圆环几个球
+    show: boolean, // Whether to show satellites
+    rotateSpeed: number, // Rotation speed
+    size: number, // Satellite size
+    number: number, // Number of spheres per ring
   },
   punctuation: punctuation,
   flyLine: {
-    color: number, // 飞线的颜色
-    speed: number, // 飞机拖尾线速度
-    flyLineColor: number // 飞行线的颜色
+    color: number, // Flight line color
+    speed: number, // Flight trail speed
+    flyLineColor: number // Flying line color
   },
 }
 type uniforms = {
@@ -99,21 +99,21 @@ export default class earth {
     this.group.add(this.earthGroup)
     this.earthGroup.name = "EarthGroup";
 
-    // 标注点效果
+    // Marker point effects
     this.markupPoint = new Group()
     this.markupPoint.name = "markupPoint"
     this.waveMeshArr = []
 
-    // 卫星和标签
+    // Satellites and labels
     this.circleLineList = []
     this.circleList = [];
     this.x = 0;
     this.n = 0;
 
-    // 地球自转
+    // Earth rotation
     this.isRotation = this.options.earth.isRotation
 
-    // 扫光动画 shader
+    // Sweep light animation shader
     this.timeValue = 100
     this.uniforms = {
       glowColor: {
@@ -148,14 +148,14 @@ export default class earth {
   async init(): Promise<void> {
     return new Promise(async (resolve) => {
 
-      this.createEarth(); // 创建地球
-      this.createStars(); // 添加星星
-      this.createEarthGlow() // 创建地球辉光
-      this.createEarthAperture() // 创建地球的大气层
-      await this.createMarkupPoint() // 创建柱状点位
-      await this.createSpriteLabel() // 创建标签
-      this.createAnimateCircle() // 创建环绕卫星
-      this.createFlyLine() // 创建飞线
+      this.createEarth(); // Create Earth
+      this.createStars(); // Add stars
+      this.createEarthGlow() // Create Earth glow
+      this.createEarthAperture() // Create Earth atmosphere
+      await this.createMarkupPoint() // Create marker points
+      await this.createSpriteLabel() // Create city name labels
+      // this.createAnimateCircle() // Create orbiting satellites - removed
+      this.createFlyLine() // Create attack path lines
 
       this.show()
       resolve()
@@ -176,21 +176,21 @@ export default class earth {
     );
 
     const pointMaterial = new PointsMaterial({
-      color: 0x81ffff, //设置颜色，默认 0xFFFFFF
+      color: 0x81ffff, // Set color, default 0xFFFFFF
       transparent: true,
       sizeAttenuation: true,
       opacity: 0.1,
-      vertexColors: false, //定义材料是否使用顶点颜色，默认false ---如果该选项设置为true，则color属性失效
-      size: 0.01, //定义粒子的大小。默认为1.0
+      vertexColors: false, // Define whether material uses vertex colors, default false - if set to true, color property is ignored
+      size: 0.01, // Define particle size. Default is 1.0
     })
-    const points = new Points(earth_border, pointMaterial); //将模型添加到场景
+    const points = new Points(earth_border, pointMaterial); // Add model to scene
 
     this.earthGroup.add(points);
 
     this.uniforms.map.value = this.options.textures.earth;
 
     const earth_material = new ShaderMaterial({
-      // wireframe:true, // 显示模型线条
+      // wireframe:true, // Show model wireframe
       uniforms: this.uniforms,
       vertexShader: earthVertex,
       fragmentShader: earthFragment,
@@ -216,14 +216,14 @@ export default class earth {
       colors.push(new Color(1, 1, 1));
     }
 
-    // 星空效果
+    // Starry sky effect
     this.around = new BufferGeometry()
     this.around.setAttribute("position", new BufferAttribute(new Float32Array(vertices), 3));
     this.around.setAttribute("color", new BufferAttribute(new Float32Array(colors), 3));
 
     const aroundMaterial = new PointsMaterial({
       size: 2,
-      sizeAttenuation: true, // 尺寸衰减
+      sizeAttenuation: true, // Size attenuation
       color: 0x4d76cf,
       transparent: true,
       opacity: 1,
@@ -231,29 +231,29 @@ export default class earth {
     });
 
     this.aroundPoints = new Points(this.around, aroundMaterial);
-    this.aroundPoints.name = "星空";
+    this.aroundPoints.name = "stars";
     this.aroundPoints.scale.set(1, 1, 1);
     this.group.add(this.aroundPoints);
   }
 
   createEarthGlow() {
-    const R = this.options.earth.radius; //地球半径
+    const R = this.options.earth.radius; // Earth radius
 
-    // TextureLoader创建一个纹理加载器对象，可以加载图片作为纹理贴图
-    const texture = this.options.textures.glow; // 加载纹理贴图
+    // TextureLoader creates a texture loader object that can load images as texture maps
+    const texture = this.options.textures.glow; // Load texture map
 
-    // 创建精灵材质对象SpriteMaterial
+    // Create sprite material object SpriteMaterial
     const spriteMaterial = new SpriteMaterial({
-      map: texture, // 设置精灵纹理贴图
+      map: texture, // Set sprite texture map
       color: 0x4390d1,
-      transparent: true, //开启透明
-      opacity: 0.7, // 可以通过透明度整体调节光圈
-      depthWrite: false, //禁止写入深度缓冲区数据
+      transparent: true, // Enable transparency
+      opacity: 0.7, // Overall adjustment of halo through transparency
+      depthWrite: false, // Disable writing depth buffer data
     });
 
-    // 创建表示地球光圈的精灵模型
+    // Create sprite model representing Earth's halo
     const sprite = new Sprite(spriteMaterial);
-    sprite.scale.set(R * 3.0, R * 3.0, 1); //适当缩放精灵
+    sprite.scale.set(R * 3.0, R * 3.0, 1); // Appropriately scale the sprite
     this.earthGroup.add(sprite);
   }
 
@@ -264,14 +264,14 @@ export default class earth {
       "varying vec3	vVertexNormal;",
       "varying vec4	vFragColor;",
       "void main(){",
-      "	vVertexNormal	= normalize(normalMatrix * normal);", //将法线转换到视图坐标系中
-      "	vVertexWorldPosition	= (modelMatrix * vec4(position, 1.0)).xyz;", //将顶点转换到世界坐标系中
+      "	vVertexNormal	= normalize(normalMatrix * normal);", // Convert normal to view coordinate system
+      "	vVertexWorldPosition	= (modelMatrix * vec4(position, 1.0)).xyz;", // Convert vertex to world coordinate system
       "	// set gl_Position",
       "	gl_Position	= projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
       "}",
     ].join("\n");
 
-    //大气层效果
+    // Atmosphere effect
     const AeroSphere = {
       uniforms: {
         coeficient: {
@@ -299,15 +299,15 @@ export default class earth {
         "varying vec4	vFragColor;",
 
         "void main(){",
-        "	vec3 worldCameraToVertex = vVertexWorldPosition - cameraPosition;", //世界坐标系中从相机位置到顶点位置的距离
-        "	vec3 viewCameraToVertex	= (viewMatrix * vec4(worldCameraToVertex, 0.0)).xyz;", //视图坐标系中从相机位置到顶点位置的距离
-        "	viewCameraToVertex= normalize(viewCameraToVertex);", //规一化
+        "	vec3 worldCameraToVertex = vVertexWorldPosition - cameraPosition;", // Distance from camera position to vertex position in world coordinates
+        "	vec3 viewCameraToVertex	= (viewMatrix * vec4(worldCameraToVertex, 0.0)).xyz;", // Distance from camera position to vertex position in view coordinates
+        "	viewCameraToVertex= normalize(viewCameraToVertex);", // Normalize
         "	float intensity	= pow(coeficient + dot(vVertexNormal, viewCameraToVertex), power);",
         "	gl_FragColor = vec4(glowColor, intensity);",
         "}",
       ].join("\n"),
     };
-    //球体 辉光 大气层
+    // Sphere glow atmosphere
     const material1 = new ShaderMaterial({
       uniforms: AeroSphere.uniforms,
       vertexShader: AeroSphere.vertexShader,
@@ -330,17 +330,17 @@ export default class earth {
     await Promise.all(this.options.data.map(async (item) => {
 
       const radius = this.options.earth.radius;
-      const lon = item.startArray.E; //经度
-      const lat = item.startArray.N; //纬度
+      const lon = item.startArray.E; // Longitude
+      const lat = item.startArray.N; // Latitude
 
       this.punctuationMaterial = new MeshBasicMaterial({
         color: this.options.punctuation.circleColor,
         map: this.options.textures.label,
-        transparent: true, //使用背景透明的png贴图，注意开启透明计算
-        depthWrite: false, //禁止写入深度缓冲区数据
+        transparent: true, // Use transparent PNG texture, note to enable transparency calculation
+        depthWrite: false, // Disable writing depth buffer data
       });
 
-      const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); //光柱底座矩形平面
+      const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); // Light pillar base rectangular plane
       this.markupPoint.add(mesh);
       const LightPillar = createLightPillar({
         radius: this.options.earth.radius,
@@ -349,16 +349,16 @@ export default class earth {
         index: 0,
         textures: this.options.textures,
         punctuation: this.options.punctuation,
-      }); //光柱
+      }); // Light pillar
       this.markupPoint.add(LightPillar);
-      const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); //波动光圈
+      const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); // Wave halo
       this.markupPoint.add(WaveMesh);
       this.waveMeshArr.push(WaveMesh);
 
       await Promise.all(item.endArray.map((obj) => {
-        const lon = obj.E; //经度
-        const lat = obj.N; //纬度
-        const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); //光柱底座矩形平面
+        const lon = obj.E; // Longitude
+        const lat = obj.N; // Latitude
+        const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); // Light pillar base rectangular plane
         this.markupPoint.add(mesh);
         const LightPillar = createLightPillar({
           radius: this.options.earth.radius,
@@ -367,9 +367,9 @@ export default class earth {
           index: 1,
           textures: this.options.textures,
           punctuation: this.options.punctuation
-        }); //光柱
+        }); // Light pillar
         this.markupPoint.add(LightPillar);
-        const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); //波动光圈
+        const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); // Wave halo
         this.markupPoint.add(WaveMesh);
         this.waveMeshArr.push(WaveMesh);
       }))
@@ -379,17 +379,60 @@ export default class earth {
 
   async createSpriteLabel() {
     await Promise.all(this.options.data.map(async item => {
-      let cityArry = [];
-      cityArry.push(item.startArray);
-      cityArry = cityArry.concat(...item.endArray);
-      await Promise.all(cityArry.map(async e => {
+      // Process attacker cities (startArray) - RED
+      const attackerCity = item.startArray;
+      const p1 = lon2xyz(this.options.earth.radius * 1.001, attackerCity.E, attackerCity.N);
+      const attackerDiv = `<div class="fire-div" style="
+        color: #ff0000;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        padding: 2px 6px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 4px;
+        border: 1px solid #ff0000;
+      ">${attackerCity.name}</div>`;
+      
+      const shareContent1 = document.getElementById("html2canvas");
+      shareContent1.innerHTML = attackerDiv;
+      const opts1 = {
+        backgroundColor: null,
+        scale: 4,
+        dpi: window.devicePixelRatio,
+      };
+      const canvas1 = await html2canvas(document.getElementById("html2canvas"), opts1)
+      const dataURL1 = canvas1.toDataURL("image/png");
+      const map1 = new TextureLoader().load(dataURL1);
+      const material1 = new SpriteMaterial({
+        map: map1,
+        transparent: true,
+      });
+      const sprite1 = new Sprite(material1);
+      const len1 = Math.max(8, 4 + attackerCity.name.length * 1.2);
+      sprite1.scale.set(len1, 4, 1);
+      sprite1.position.set(p1.x * 1.15, p1.y * 1.15, p1.z * 1.15);
+      this.earth.add(sprite1);
+      
+      // Process target cities (endArray) - WHITE
+      await Promise.all(item.endArray.map(async e => {
         const p = lon2xyz(this.options.earth.radius * 1.001, e.E, e.N);
-        const div = `<div class="fire-div">${e.name}</div>`;
+        const div = `<div class="fire-div" style="
+          color: #ffffff;
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+          font-weight: bold;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+          padding: 2px 6px;
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 4px;
+          border: 1px solid #ffffff;
+        ">${e.name}</div>`;
         const shareContent = document.getElementById("html2canvas");
         shareContent.innerHTML = div;
         const opts = {
-          backgroundColor: null, // 背景透明
-          scale: 6,
+          backgroundColor: null,
+          scale: 4,
           dpi: window.devicePixelRatio,
         };
         const canvas = await html2canvas(document.getElementById("html2canvas"), opts)
@@ -400,20 +443,20 @@ export default class earth {
           transparent: true,
         });
         const sprite = new Sprite(material);
-        const len = 5 + (e.name.length - 2) * 2;
-        sprite.scale.set(len, 3, 1);
-        sprite.position.set(p.x * 1.1, p.y * 1.1, p.z * 1.1);
+        const len = Math.max(8, 4 + e.name.length * 1.2);
+        sprite.scale.set(len, 4, 1);
+        sprite.position.set(p.x * 1.15, p.y * 1.15, p.z * 1.15);
         this.earth.add(sprite);
       }))
     }))
   }
 
   createAnimateCircle() {
-    // 创建 圆环 点
+    // Create ring points
     const list = getCirclePoints({
       radius: this.options.earth.radius + 15,
-      number: 150, //切割数
-      closed: true, // 闭合
+      number: 150, // Number of divisions
+      closed: true, // Closed
     });
     const mat = new MeshBasicMaterial({
       color: "#0c3172",
@@ -429,7 +472,7 @@ export default class earth {
     });
     this.earthGroup.add(line);
 
-    // 在clone两条线出来
+    // Clone two more lines
     const l2 = line.clone();
     l2.scale.set(1.2, 1.2, 1.2);
     l2.rotateZ(Math.PI / 6);
@@ -441,7 +484,7 @@ export default class earth {
     this.earthGroup.add(l3);
 
     /**
-     * 旋转的球
+     * Rotating spheres
      */
     const ball = new Mesh(
       new SphereBufferGeometry(this.options.satellite.size, 32, 32),
@@ -465,11 +508,11 @@ export default class earth {
     );
 
     this.circleLineList.push(line, l2, l3);
-    ball.name = ball2.name = ball3.name = "卫星";
+    ball.name = ball2.name = ball3.name = "satellite";
 
     for (let i = 0; i < this.options.satellite.number; i++) {
       const ball01 = ball.clone();
-      // 一根线上总共有几个球，根据数量平均分布一下
+      // How many spheres are on one line, distribute them evenly based on the count
       const num = Math.floor(list.length / this.options.satellite.number)
       ball01.position.set(
         list[num * (i + 1)][0] * 1,
@@ -507,7 +550,7 @@ export default class earth {
     this.options.data.forEach((cities) => {
       cities.endArray.forEach(item => {
 
-        // 调用函数flyArc绘制球面上任意两点之间飞线圆弧轨迹
+        // Call function flyArc to draw flight line arc trajectory between any two points on the sphere
         const arcline = flyArc(
           this.options.earth.radius,
           cities.startArray.E,
@@ -517,7 +560,7 @@ export default class earth {
           this.options.flyLine
         );
 
-        this.flyLineArcGroup.add(arcline); // 飞线插入flyArcGroup中
+        this.flyLineArcGroup.add(arcline); // Insert flight line into flyArcGroup
         this.flyLineArcGroup.userData['flyLineArray'].push(arcline.userData['flyLine'])
       });
 
@@ -537,8 +580,9 @@ export default class earth {
 
   render() {
 
+    // Attack path animations - showing cyber attacks in progress
     this.flyLineArcGroup?.userData['flyLineArray']?.forEach(fly => {
-      fly.rotation.z += this.options.flyLine.speed; // 调节飞线速度
+      fly.rotation.z += this.options.flyLine.speed; // Adjust attack animation speed
       if (fly.rotation.z >= fly.flyEndAngle) fly.rotation.z = 0;
     })
 
@@ -546,15 +590,17 @@ export default class earth {
       this.earthGroup.rotation.y += this.options.earth.rotateSpeed;
     }
 
-    this.circleLineList.forEach((e) => {
-      e.rotateY(this.options.satellite.rotateSpeed);
-    });
+    // Removed satellite orbit animations - no longer needed
+    // this.circleLineList.forEach((e) => {
+    //   e.rotateY(this.options.satellite.rotateSpeed);
+    // });
 
     this.uniforms.time.value =
       this.uniforms.time.value < -this.timeValue
         ? this.timeValue
         : this.uniforms.time.value - 1;
 
+    // Keep wave mesh animations for threat activity visualization
     if (this.waveMeshArr.length) {
       this.waveMeshArr.forEach((mesh: Mesh) => {
         mesh.userData['scale'] += 0.007;
@@ -564,9 +610,9 @@ export default class earth {
           mesh.userData['size'] * mesh.userData['scale']
         );
         if (mesh.userData['scale'] <= 1.5) {
-          (mesh.material as Material).opacity = (mesh.userData['scale'] - 1) * 2; //2等于1/(1.5-1.0)，保证透明度在0~1之间变化
+          (mesh.material as Material).opacity = (mesh.userData['scale'] - 1) * 2; // 2 equals 1/(1.5-1.0), ensuring opacity varies between 0~1
         } else if (mesh.userData['scale'] > 1.5 && mesh.userData['scale'] <= 2) {
-          (mesh.material as Material).opacity = 1 - (mesh.userData['scale'] - 1.5) * 2; //2等于1/(2.0-1.5) mesh缩放2倍对应0 缩放1.5被对应1
+          (mesh.material as Material).opacity = 1 - (mesh.userData['scale'] - 1.5) * 2; // 2 equals 1/(2.0-1.5), mesh scale 2x corresponds to 0, scale 1.5x corresponds to 1
         } else {
           mesh.userData['scale'] = 1;
         }

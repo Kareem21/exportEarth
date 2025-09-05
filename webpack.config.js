@@ -1,43 +1,43 @@
 const path = require('path')
-// 引入html插件
+// Import HTML plugin
 const HTMLWebpackPlugin = require('html-webpack-plugin')
-// 把整个目录copy过去
+// Copy entire directory
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-// 引入clean插件
+// Import clean plugin
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 const ESLintPlugin = require('eslint-webpack-plugin')
 
-// webpack中的所有的配置信息都应该写在module.exports中
+// All configuration information in webpack should be written in module.exports
 module.exports = {
   devServer: {
     port: '8088'
   },
-  // 指定入口文件
+  // Specify entry file
   entry: './src/ts/index.ts',
-  // 指定打包文件所在目录
+  // Specify directory where packaged files are located
   output: {
-    // 指定打包文件的目录
+    // Specify directory for packaged files
     path: path.resolve(__dirname, 'dist'),
-    // 打包后文件的文件
+    // File name after packaging
     filename: 'bundle.js',
     libraryTarget: 'umd',
-    // 告诉webpack不使用箭头
-    // 默认打包后是一个立即执行的箭头函数，在IE 11中也是无法执行的！
-    // 加上下面的配置，可以在webpack打包时，最外层不再是箭头函数
-    // webpack新版本已经不想兼容IE了！233
+    // Tell webpack not to use arrow functions
+    // By default, the packaged result is an immediately executed arrow function, which cannot be executed in IE 11!
+    // With the configuration below, webpack won't use arrow functions at the outermost layer when packaging
+    // Webpack new version no longer wants to be compatible with IE! 233
     environment: {
       arrowFunction: false,
     },
   },
-  // 指定webpack打包时要使用模块
+  // Specify modules to use when webpack packages
   module: {
-    // 指定要加载的规则
+    // Specify rules to load
     rules: [
       {
-        // test指定的是规则生效的文件
+        // test specifies the files to which the rule applies
         test: /\.ts$/,
-        // 要使用的loader
+        // Loader to use
         // Webpack在加载时是"从后向前"加载！
         use: [
           // 配置babel
@@ -91,7 +91,7 @@ module.exports = {
     new HTMLWebpackPlugin({
       template: './src/index.html',
     }),
-    // 把整个目录copy过去
+    // Copy entire directory
     new CopyWebpackPlugin({
       patterns: [{ from: path.resolve(__dirname, './static') }],
     }),

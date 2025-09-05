@@ -1,5 +1,5 @@
 /**
- * 屏幕尺寸
+ * Screen dimensions
 */
 import { EventEmitter } from 'pietile-eventemitter';
 import { IEvents } from '../interfaces/IEvents';
@@ -40,9 +40,9 @@ export default class Sizes {
   }
 
   /**
-   * 目前用于监听历史记录执行 historyChange
-   * @param event 事件
-   * @param fun 执行
+   * Currently used to listen to history record execution historyChange
+   * @param event Event
+   * @param fun Execute
    */
   $on<T extends keyof IEvents>(event: T, fun: () => void) {
     this.emitter.on(
@@ -57,7 +57,7 @@ export default class Sizes {
    * Resize
    */
   resize() {
-    // 可视区域大小
+    // Viewport size
     this.viewport.width = this.$sizeViewport.offsetWidth
     this.viewport.height = this.$sizeViewport.offsetHeight
 

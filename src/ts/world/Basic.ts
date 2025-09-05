@@ -1,6 +1,6 @@
 /**
- * 创建 threejs 四大天王
- * 场景、相机、渲染器、控制器
+ * Create Three.js four essential components
+ * Scene, Camera, Renderer, Controls
  */
 
 import * as THREE from 'three';
@@ -22,7 +22,7 @@ export class Basic {
   }
 
   /**
-   * 初始化场景
+   * Initialize scene
    */
   initScenes() {
     this.scene = new THREE.Scene();
@@ -37,33 +37,33 @@ export class Basic {
 
 
     this.renderer = new THREE.WebGLRenderer({
-      alpha: true, // 透明
-      antialias: true, // 抗锯齿
+      alpha: true, // Transparent
+      antialias: true, // Anti-aliasing
     });
-    this.renderer.setPixelRatio(window.devicePixelRatio); // 设置屏幕像素比
-    this.renderer.setSize(window.innerWidth, window.innerHeight); // 设置渲染器宽高
-    this.dom.appendChild(this.renderer.domElement); // 添加到dom中
+    this.renderer.setPixelRatio(window.devicePixelRatio); // Set screen pixel ratio
+    this.renderer.setSize(window.innerWidth, window.innerHeight); // Set renderer width and height
+    this.dom.appendChild(this.renderer.domElement); // Add to DOM
   }
 
   /**
-   * 设置控制器
+   * Set up controls
    */
   setControls() {
-    // 鼠标控制      相机，渲染dom
+    // Mouse controls for camera and rendering DOM
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     
     this.controls.autoRotateSpeed = 3
-    // 使动画循环使用时阻尼或自转 意思是否有惯性
+    // Enable damping or auto-rotation for animation loop - controls inertia
     this.controls.enableDamping = true;
-    // 动态阻尼系数 就是鼠标拖拽旋转灵敏度
+    // Dynamic damping factor - mouse drag rotation sensitivity
     this.controls.dampingFactor = 0.05;
-    // 是否可以缩放
+    // Enable zoom
     this.controls.enableZoom = true;
-    // 设置相机距离原点的最远距离
+    // Set minimum distance from camera to origin
     this.controls.minDistance = 100;
-    // 设置相机距离原点的最远距离
+    // Set maximum distance from camera to origin
     this.controls.maxDistance = 300;
-    // 是否开启右键拖拽
+    // Enable right-click drag
     this.controls.enablePan = false;
   }
 }

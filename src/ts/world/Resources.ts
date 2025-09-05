@@ -1,5 +1,5 @@
 /**
- * 资源管理和加载
+ * Resource management and loading
  */
 import { LoadingManager, Texture, TextureLoader } from 'three';
 import { resources } from './Assets'
@@ -9,41 +9,41 @@ export class Resources {
   private textureLoader!: InstanceType<typeof TextureLoader>;
   public textures: Record<string, Texture>;
   constructor(callback: () => void) {
-    this.callback = callback // 资源加载完成的回调
+    this.callback = callback // Callback for resource loading completion
 
-    this.textures = {} // 贴图对象
+    this.textures = {} // Texture objects
 
     this.setLoadingManager()
     this.loadResources()
   }
 
   /**
-   * 管理加载状态
+   * Manage loading state
    */
   private setLoadingManager() {
 
     this.manager = new LoadingManager()
-    // 开始加载
+    // Start loading
     this.manager.onStart = () => {
-      console.log('开始加载资源文件')
+      console.log('Start loading resource files')
     }
-    // 加载完成
+    // Loading complete
     this.manager.onLoad = () => {
       this.callback()
     }
-    // 正在进行中
+    // In progress
     this.manager.onProgress = (url) => {
-      console.log(`正在加载：${url}`)
+      console.log(`Loading: ${url}`)
     }
 
     this.manager.onError = url => {
-      console.log('加载失败：' + url)
+      console.log('Loading failed: ' + url)
     }
 
   }
 
   /**
-   * 加载资源
+   * Load resources
    */
   private loadResources(): void {
     this.textureLoader = new TextureLoader(this.manager)

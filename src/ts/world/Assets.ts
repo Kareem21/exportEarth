@@ -1,6 +1,6 @@
 /**
- * 资源文件
- * 把模型和图片分开进行加载
+ * Resource files
+ * Load models and images separately
  */
 
 interface ITextures {

@@ -3,43 +3,43 @@ import { punctuation } from "../world/Earth";
 
 
 /**
- * 经纬度坐标转球面坐标  
- * @param {地球半径} R  
- * @param {经度(角度值)} longitude 
- * @param {维度(角度值)} latitude
+ * Convert longitude/latitude coordinates to spherical coordinates  
+ * @param {Earth radius} R  
+ * @param {Longitude (degree value)} longitude 
+ * @param {Latitude (degree value)} latitude
  */
 export const lon2xyz = (R:number, longitude:number, latitude:number): Vector3 => {
-  let lon = longitude * Math.PI / 180; // 转弧度值
-  const lat = latitude * Math.PI / 180; // 转弧度值
-  lon = -lon; // js坐标系z坐标轴对应经度-90度，而不是90度
+  let lon = longitude * Math.PI / 180; // Convert to radians
+  const lat = latitude * Math.PI / 180; // Convert to radians
+  lon = -lon; // JS coordinate system z-axis corresponds to longitude -90 degrees, not 90 degrees
 
-  // 经纬度坐标转球面坐标计算公式
+  // Formula for converting longitude/latitude coordinates to spherical coordinates
   const x = R * Math.cos(lat) * Math.cos(lon);
   const y = R * Math.sin(lat);
   const z = R * Math.cos(lat) * Math.sin(lon);
-  // 返回球面坐标
+  // Return spherical coordinates
   return new Vector3(x, y, z);
 }
 
-// 创建波动光圈
+// Create wave halo
 export const createWaveMesh = (options: { radius, lon, lat, textures }) => {
-  const geometry = new PlaneBufferGeometry(1, 1); //默认在XOY平面上
+  const geometry = new PlaneBufferGeometry(1, 1); // Default on XOY plane
   const texture = options.textures.aperture;
 
   const material = new MeshBasicMaterial({
     color: 0xe99f68,
     map: texture,
-    transparent: true, //使用背景透明的png贴图，注意开启透明计算
+    transparent: true, // Use transparent PNG texture, note to enable transparency calculation
     opacity: 1.0,
-    depthWrite: false, //禁止写入深度缓冲区数据
+    depthWrite: false, // Disable writing depth buffer data
   });
   const mesh = new Mesh(geometry, material);
-  // 经纬度转球面坐标
+  // Convert longitude/latitude to spherical coordinates
   const coord = lon2xyz(options.radius * 1.001, options.lon, options.lat);
-  const size = options.radius * 0.12; //矩形平面Mesh的尺寸
-  mesh.scale.set(size, size, size); //设置mesh大小
-  mesh.userData['size'] = size; //自顶一个属性，表示mesh静态大小
-  mesh.userData['scale'] = Math.random() * 1.0; //自定义属性._s表示mesh在原始大小基础上放大倍数  光圈在原来mesh.size基础上1~2倍之间变化
+  const size = options.radius * 0.12; // Size of rectangular plane Mesh
+  mesh.scale.set(size, size, size); // Set mesh size
+  mesh.userData['size'] = size; // Custom property representing mesh static size
+  mesh.userData['scale'] = Math.random() * 1.0; // Custom property representing mesh scale multiplier from original size - halo varies between 1~2 times the original mesh.size
   mesh.position.set(coord.x, coord.y, coord.z);
   const coordVec3 = new Vector3(coord.x, coord.y, coord.z).normalize();
   const meshNormal = new Vector3(0, 0, 1);
@@ -47,7 +47,7 @@ export const createWaveMesh = (options: { radius, lon, lat, textures }) => {
   return mesh;
 }
 
-// 创建柱状
+// Create pillar
 export const createLightPillar = (options: { radius: number, lon: number, lat: number, index: number, textures: Record<string, Texture>, punctuation: punctuation }) => {
   const height = options.radius * 0.3;
   const geometry = new PlaneBufferGeometry(options.radius * 0.05, height);
@@ -61,15 +61,15 @@ export const createLightPillar = (options: { radius: number, lon: number, lat: n
         : options.punctuation.lightColumn.endColor,
     transparent: true,
     side: DoubleSide,
-    depthWrite: false, //是否对深度缓冲区有任何的影响
+    depthWrite: false, // Whether it affects the depth buffer
   });
   const mesh = new Mesh(geometry, material);
   const group = new Group();
-  // 两个光柱交叉叠加
-  group.add(mesh, mesh.clone().rotateZ(Math.PI / 2)); //几何体绕x轴旋转了，所以mesh旋转轴变为z
-  // 经纬度转球面坐标
-  const SphereCoord = lon2xyz(options.radius, options.lon, options.lat); //SphereCoord球面坐标
-  group.position.set(SphereCoord.x, SphereCoord.y, SphereCoord.z); //设置mesh位置
+  // Two light pillars cross and overlay
+  group.add(mesh, mesh.clone().rotateZ(Math.PI / 2)); // Geometry rotated around x-axis, so mesh rotation axis becomes z
+  // Convert longitude/latitude to spherical coordinates
+  const SphereCoord = lon2xyz(options.radius, options.lon, options.lat); // SphereCoord spherical coordinates
+  group.position.set(SphereCoord.x, SphereCoord.y, SphereCoord.z); // Set mesh position
   const coordVec3 = new Vector3(
     SphereCoord.x,
     SphereCoord.y,
@@ -80,20 +80,20 @@ export const createLightPillar = (options: { radius: number, lon: number, lat: n
   return group;
 }
 
-// 光柱底座矩形平面
+// Light pillar base rectangular plane
 export const createPointMesh = (options: {
   radius: number, lon: number,
   lat: number, material: MeshBasicMaterial
 }) => {
 
-  const geometry = new PlaneBufferGeometry(1, 1); //默认在XOY平面上
+  const geometry = new PlaneBufferGeometry(1, 1); // Default on XOY plane
   const mesh = new Mesh(geometry, options.material);
-  // 经纬度转球面坐标
+  // Convert longitude/latitude to spherical coordinates
   const coord = lon2xyz(options.radius * 1.001, options.lon, options.lat);
-  const size = options.radius * 0.05; // 矩形平面Mesh的尺寸
-  mesh.scale.set(size, size, size); // 设置mesh大小
+  const size = options.radius * 0.05; // Size of rectangular plane Mesh
+  mesh.scale.set(size, size, size); // Set mesh size
 
-  // 设置mesh位置
+  // Set mesh position
   mesh.position.set(coord.x, coord.y, coord.z);
   const coordVec3 = new Vector3(coord.x, coord.y, coord.z).normalize();
   const meshNormal = new Vector3(0, 0, 1);
@@ -102,7 +102,7 @@ export const createPointMesh = (options: {
 
 }
 
-// 获取点
+// Get points
 export const getCirclePoints = (option) => {
   const list = [];
   for (
@@ -120,20 +120,20 @@ export const getCirclePoints = (option) => {
   return list;
 }
 
-// 创建线
+// Create line
 
 /**
- * 创建动态的线
+ * Create animated line
  */
 export const createAnimateLine = (option) => {
-  // 由多个点数组构成的曲线 通常用于道路
+  // Curve composed of multiple point arrays, usually used for roads
   const l = [];
   option.pointList.forEach((e) =>
     l.push(new Vector3(e[0], e[1], e[2]))
   );
-  const curve = new CatmullRomCurve3(l); // 曲线路径
+  const curve = new CatmullRomCurve3(l); // Curve path
 
-  // 管道体
+  // Tube geometry
   const tubeGeometry = new TubeGeometry(
     curve,
     option.number || 50,

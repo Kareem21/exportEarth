@@ -1,6 +1,6 @@
 // Definitions to let TS understand .vs, .fs, .glsl shader files
 /**
- * 声明着色器
+ * Declare shaders
  */
 
 declare module '*.fs' {

@@ -15,7 +15,7 @@ import { Resources } from './Resources';
 
 // earth 
 import Earth from './Earth'
-import Data from './Data'
+// import Data from './Data' // Now using dynamic data
 
 export default class World {
   public basic: Basic;
@@ -32,7 +32,7 @@ export default class World {
 
   constructor(option: IWord) {
     /**
-     * 加载资源
+     * Load resources
      */
     this.option = option
 
@@ -52,40 +52,76 @@ export default class World {
 
     this.resources = new Resources(async () => {
       await this.createEarth()
-      // 开始渲染
+      // Start rendering
       this.render()
     })
   }
 
   async createEarth() {
 
-    // 资源加载完成，开始制作地球，注释在new Earth()类型里面
+    // Sample cybersecurity attack data - Clean demo with 5 attacks
+    const defaultData = [
+      {
+        startArray: { name: 'Russia', N: 61.52401, E: 105.318756 },
+        endArray: [{ name: 'Dubai', N: 25.2048, E: 55.2708 }]
+      },
+      {
+        startArray: { name: 'China', N: 35.8617, E: 104.1954 },
+        endArray: [
+          { name: 'Tokyo', N: 35.6762, E: 139.6503 },
+          { name: 'Seoul', N: 37.5665, E: 126.9780 }
+        ]
+      },
+      {
+        startArray: { name: 'North Korea', N: 40.3399, E: 127.5101 },
+        endArray: [
+          { name: 'Washington DC', N: 38.9072, E: -77.0369 },
+          { name: 'New York', N: 40.7128, E: -74.0060 }
+        ]
+      },
+      {
+        startArray: { name: 'Iran', N: 32.4279, E: 53.6880 },
+        endArray: [
+          { name: 'London', N: 51.5074, E: -0.1278 },
+          { name: 'Frankfurt', N: 50.1109, E: 8.6821 }
+        ]
+      },
+      {
+        startArray: { name: 'Brazil', N: -14.2350, E: -51.9253 },
+        endArray: [
+          { name: 'Miami', N: 25.7617, E: -80.1918 },
+          { name: 'Mexico City', N: 19.4326, E: -99.1332 }
+        ]
+      }
+    ];
+
+    // Resources loaded, start creating the Earth, comments are in the Earth() class
     this.earth = new Earth({
-      data: Data,
+      data: this.option.data || defaultData,
       dom: this.option.dom,
       textures: this.resources.textures,
       earth: {
-        radius: 50,
-        rotateSpeed: 0.002,
-        isRotation: true
+        radius: this.option.earth?.radius || 50,
+        rotateSpeed: this.option.earth?.rotateSpeed || 0.002,
+        isRotation: this.option.earth?.isRotation || false // Disabled auto-rotation, manual controls still work
       },
       satellite: {
-        show: true,
-        rotateSpeed: -0.01,
-        size: 1,
-        number: 2
+        show: false, // Disabled for threat map
+        rotateSpeed: 0,
+        size: 0,
+        number: 0
       },
       punctuation: {
-        circleColor: 0x3892ff,
+        circleColor: this.option.punctuation?.circleColor || 0xff4444, // Red for threats
         lightColumn: {
-          startColor: 0xe4007f, // 起点颜色
-          endColor: 0xffffff, // 终点颜色
+          startColor: this.option.punctuation?.lightColumn?.startColor || 0xff0000, // Red for threats
+          endColor: this.option.punctuation?.lightColumn?.endColor || 0xffffff, // White end
         },
       },
       flyLine: {
-        color: 0xf3ae76, // 飞线的颜色
-        flyLineColor: 0xff7714, // 飞行线的颜色
-        speed: 0.004, // 拖尾飞线的速度
+        color: this.option.flyLine?.color || 0xffffff, // Bold white attack lines
+        flyLineColor: this.option.flyLine?.flyLineColor || 0xffffff, // White for active attacks
+        speed: this.option.flyLine?.speed || 0.015, // Much faster speed for cyber attacks (3.75x original)
       }
     })
 
@@ -93,14 +129,16 @@ export default class World {
 
     await this.earth.init()
 
-    // 隐藏dom
+    // Hide loading DOM element (only if it exists)
     const loading = document.querySelector('#loading')
-    loading.classList.add('out')
+    if (loading) {
+      loading.classList.add('out')
+    }
 
   }
 
   /**
-   * 渲染函数
+   * Render function
    */
   public render() {
     requestAnimationFrame(this.render.bind(this))
