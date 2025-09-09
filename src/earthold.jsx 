@@ -1,0 +1,204 @@
+import React, { useEffect, useRef, useState } from 'react';
+import ThreatSidebar from './ThreatSidebar.jsx';
+import AttackLog from './AttackLog.jsx';
+import './Earth.css';
+
+function Earth() {
+  const canvasRef = useRef(null);
+  const [EarthModuleClass, setEarthModuleClass] = useState(null);
+  const [earthInstance, setEarthInstance] = useState(null);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Dynamic import to load the Earth module
+    const loadEarthModule = async () => {
+      try {
+        setIsLoading(true);
+        const module = await import('../../dist/index.js');
+        
+        // The module exports both named exports and default
+        // We want the EarthModule class
+        const EarthModuleConstructor = module.EarthModule || module.default;
+        
+        if (!EarthModuleConstructor) {
+          throw new Error('EarthModule class not found in module exports');
+        }
+        
+        setEarthModuleClass(() => EarthModuleConstructor);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load Earth module:', err);
+        setError(`Failed to load 3D Earth module: ${err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEarthModule();
+  }, []);
+
+  useEffect(() => {
+    if (!EarthModuleClass || !canvasRef.current || isLoading) return;
+
+    const initEarth = async () => {
+      try {
+        // Clean up any existing instance
+        if (earthInstance) {
+          earthInstance.destroy();
+        }
+
+        // Create a new instance of the EarthModule class
+        const instance = new EarthModuleClass();
+
+        // Sample cybersecurity threat data
+        const threatData = [
+          {
+            startArray: {
+              name: 'Beijing',
+              N: 39.9042,
+              E: 116.4074,
+            },
+            endArray: [
+              {
+                name: 'New York',
+                N: 40.7128,
+                E: -74.0060,
+              },
+              {
+                name: 'London',
+                N: 51.5074,
+                E: -0.1278,
+              }
+            ]
+          },
+          {
+            startArray: {
+              name: 'Moscow',
+              N: 55.7558,
+              E: 37.6176,
+            },
+            endArray: [
+              {
+                name: 'Tokyo',
+                N: 35.6762,
+                E: 139.6503,
+              },
+              {
+                name: 'Sydney',
+                N: -33.8688,
+                E: 151.2093,
+              }
+            ]
+          }
+        ];
+
+        await instance.init({
+          dom: canvasRef.current,
+          attackData: threatData,
+          earth: {
+            radius: 50,
+            rotateSpeed: 0.002,
+            isRotation: true
+          },
+          satellite: {
+            show: true,
+            rotateSpeed: -0.01,
+            size: 1,
+            number: 2
+          },
+          punctuation: {
+            circleColor: 0x3892ff,
+            lightColumn: {
+              startColor: 0xe4007f,
+              endColor: 0xffffff,
+            },
+          },
+          flyLine: {
+            color: 0xf3ae76,
+            flyLineColor: 0xff7714,
+            speed: 0.004,
+          }
+        });
+
+        setEarthInstance(instance);
+        setError(null);
+      } catch (error) {
+        console.error('Failed to initialize Earth:', error);
+        setError(`Failed to initialize 3D Earth: ${error.message}`);
+      }
+    };
+
+    initEarth();
+
+    // Cleanup function
+    return () => {
+      if (earthInstance) {
+        earthInstance.destroy();
+      }
+    };
+  }, [EarthModuleClass, isLoading]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (earthInstance) {
+        earthInstance.destroy();
+      }
+    };
+  }, []);
+
+
+
+  if (error) {
+    return (
+      <div className="threat-map-page">
+        <div className="earth-error">
+          <h2>Earth Module Error</h2>
+          <p>{error}</p>
+          <p>Please check the console for more details.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="threat-map-page">
+        <div className="earth-loading">
+          <h2>Loading 3D Earth...</h2>
+          <p>Initializing threat visualization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="threat-map-page">
+      {/* Fixed background layer with Earth */}
+      <div className="earth-layer">
+        <div
+          ref={canvasRef}
+          className="earth-canvas"
+          id="earth-canvas"
+        />
+      </div>
+
+      {/* Scrollable content layer */}
+      <div className="content-layer">
+        <div className="content-wrapper">
+          <ThreatSidebar />
+        </div>
+
+        {/* Attack log fixed at bottom */}
+        <div className="attack-log-wrapper">
+          <AttackLog />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+export default Earth;

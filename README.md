@@ -1,222 +1,309 @@
-# 3D Earth Cybersecurity Threat Map Module
+'# 3D Earth Cybersecurity Threat Visualization Module
 
-A Three.js-based 3D Earth visualization module designed for cybersecurity threat monitoring. This module displays real-time cyber attacks with animated flight paths between attacker and target locations.
+A reusable React-compatible 3D Earth visualization module built with Three.js and TypeScript, designed for cybersecurity threat mapping and attack visualization.
 
-![3D Earth Threat Map](./3d-earth.png)
+![3D Earth Module](https://img.shields.io/badge/3D_Earth-Module-blue) ![Three.js](https://img.shields.io/badge/Three.js-0.143-green) ![TypeScript](https://img.shields.io/badge/TypeScript-4.1-blue) ![React Compatible](https://img.shields.io/badge/React-Compatible-61DAFB)
 
 ## Features
 
-- ✅ Interactive 3D Earth with realistic textures
-- ✅ Star field background with atmospheric glow effects
-- ✅ City markers with pulsing wave animations
-- ✅ Animated attack paths showing source → destination
-- ✅ Color-coded threat visualization (Red attackers, White targets)
-- ✅ Configurable attack line speed
-- ✅ Manual rotation controls (no auto-rotation)
+- **Interactive 3D Earth Globe** with high-resolution textures
+- **Real-time Attack Visualization** with animated flight paths
+- **City Markers** with glowing light pillars and expanding wave effects
+- **Satellite Orbits** with animated satellites
+- **Atmospheric Effects** including glow and particle star field
+- **HTML-rendered City Labels** using html2canvas
+- **Fully Configurable** colors, speeds, and visual effects
+- **React Integration Ready** with proper lifecycle management
+- **TypeScript Support** with full type definitions
 
-## Installation & Development
+## Quick Start
 
-### Prerequisites
-- Node.js 14+
-- npm or yarn
+### 1. Installation
 
-### Development Setup
-```bash
-# Install dependencies
-npm install
-
-# Start development server (runs on http://localhost:8088)
-npm run dev
-
-# Build for production
-npm run build
-
-# Build as module for external use
-npm run build-module
-```
-
-## Module Export & React Integration
-
-### 1. Building the Module
-
-To export this project as a reusable module:
+Copy the built module files to your React project:
 
 ```bash
-npm run build-module
+# Copy the built module and assets to your React project
+cp -r dist/ /path/to/your/react-project/src/modules/earth-module/
+cp -r static/ /path/to/your/react-project/public/
 ```
 
-This generates the module files in the `dist/` directory.
-
-### 2. React Integration
-
-#### Installation in your React project:
-
-Option A - Local module:
-```bash
-# Copy the built module to your React project
-cp -r dist/ /path/to/your/react-app/src/modules/earth-module/
-```
-
-Option B - NPM package (if published):
-```bash
-npm install 3d-earth-threat-map
-```
-
-#### Usage in Earth.jsx:
+### 2. Basic Usage
 
 ```jsx
-import React, { useEffect, useRef } from 'react';
-import EarthModule from './modules/earth-module'; // Adjust path as needed
+import React, { useEffect, useRef, useState } from 'react';
 
-const Earth = ({ attackData, attackSpeed = 0.015 }) => {
-  const canvasRef = useRef();
-  const earthInstanceRef = useRef();
+function ThreatMapComponent() {
+  const canvasRef = useRef(null);
+  const [EarthModuleClass, setEarthModuleClass] = useState(null);
+  const [earthInstance, setEarthInstance] = useState(null);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const loadEarthModule = async () => {
+      const module = await import('./modules/earth-module/dist/index.js');
+      setEarthModuleClass(() => module.EarthModule || module.default);
+    };
+    loadEarthModule();
+  }, []);
 
-    // Initialize Earth module
-    earthInstanceRef.current = new EarthModule({
-      dom: canvasRef.current,
-      data: attackData,
-      flyLine: {
-        speed: attackSpeed, // Configurable attack line speed
-      }
-    });
+  useEffect(() => {
+    if (!EarthModuleClass || !canvasRef.current) return;
 
-    // Cleanup on unmount
+    const initEarth = async () => {
+      const instance = new EarthModuleClass();
+      
+      await instance.init({
+        dom: canvasRef.current,
+        attackData: [
+          {
+            startArray: { name: 'Beijing', N: 39.9042, E: 116.4074 },
+            endArray: [
+              { name: 'New York', N: 40.7128, E: -74.0060 },
+              { name: 'London', N: 51.5074, E: -0.1278 }
+            ]
+          }
+        ]
+      });
+      
+      setEarthInstance(instance);
+    };
+
+    initEarth();
+
     return () => {
-      if (earthInstanceRef.current) {
-        earthInstanceRef.current.destroy?.();
+      if (earthInstance) {
+        earthInstance.destroy();
       }
     };
-  }, [attackData, attackSpeed]);
+  }, [EarthModuleClass]);
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
-      <canvas 
-        ref={canvasRef} 
+      <div 
+        ref={canvasRef}
         id="earth-canvas"
         style={{ width: '100%', height: '100%' }}
       />
     </div>
   );
-};
+}
 
-export default Earth;
+export default ThreatMapComponent;
 ```
 
-#### Usage in your app:
+## Configuration Options
 
-```jsx
-import Earth from './components/Earth';
+### Attack Data Structure
 
-const App = () => {
-  const threatData = [
-    {
-      startArray: { name: 'Russia', N: 61.52401, E: 105.318756 },
-      endArray: [{ name: 'Dubai', N: 25.2048, E: 55.2708 }]
-    },
-    {
-      startArray: { name: 'China', N: 35.8617, E: 104.1954 },
-      endArray: [
-        { name: 'Tokyo', N: 35.6762, E: 139.6503 },
-        { name: 'Seoul', N: 37.5665, E: 126.9780 }
-      ]
-    }
-  ];
-
-  return (
-    <div>
-      <Earth 
-        attackData={threatData} 
-        attackSpeed={0.020} // Optional: control animation speed
-      />
-    </div>
-  );
-};
-```
-
-## Data Structure
-
-### Attack Data Format
-
-The module expects an array of attack objects with this structure:
+The module expects attack data in the following format:
 
 ```typescript
 interface AttackData {
   startArray: {
-    name: string;     // Attacker city/country name
-    N: number;        // Latitude (-90 to 90)
-    E: number;        // Longitude (-180 to 180)
+    name: string;    // City name
+    N: number;       // Latitude
+    E: number;       // Longitude
   };
-  endArray: Array<{
-    name: string;     // Target city/country name  
-    N: number;        // Latitude (-90 to 90)
-    E: number;        // Longitude (-180 to 180)
-  }>;
+  endArray: {
+    name: string;    // Target city name
+    N: number;       // Latitude  
+    E: number;       // Longitude
+  }[];
 }
-
-type ThreatData = AttackData[];
 ```
 
-### Configuration Options
+### Full Configuration Options
 
 ```typescript
-interface EarthConfig {
-  dom: HTMLElement;           // Canvas container element
-  data?: AttackData[];        // Attack data (optional, uses sample data if not provided)
-  flyLine?: {
-    speed?: number;           // Attack line animation speed (default: 0.015)
-    color?: number;           // Attack line color (default: 0xffffff - white)
-    flyLineColor?: number;    // Flying animation color (default: 0xffffff)
-  };
-  earth?: {
-    radius?: number;          // Earth radius (default: 50)
-    rotateSpeed?: number;     // Auto-rotation speed (default: 0.002, set to 0 to disable)
-    isRotation?: boolean;     // Enable/disable auto-rotation (default: false)
-  };
-}
+await instance.init({
+  dom: canvasRef.current,              // Required: HTML element for canvas
+  attackData: threatData,              // Optional: Array of AttackData
+  
+  // Earth configuration
+  earth: {
+    radius: 50,                        // Earth radius
+    rotateSpeed: 0.002,                // Rotation speed
+    isRotation: true                   // Enable/disable rotation
+  },
+  
+  // Satellite configuration
+  satellite: {
+    show: true,                        // Show satellites
+    rotateSpeed: -0.01,                // Satellite orbit speed
+    size: 1,                          // Satellite size
+    number: 2                         // Number of satellite rings
+  },
+  
+  // City markers and effects
+  punctuation: {
+    circleColor: 0x3892ff,            // City marker color
+    lightColumn: {
+      startColor: 0xe4007f,           // Light pillar start color
+      endColor: 0xffffff,             // Light pillar end color
+    },
+  },
+  
+  // Flight lines
+  flyLine: {
+    color: 0xf3ae76,                  // Flight path color
+    flyLineColor: 0xff7714,           // Animated line color
+    speed: 0.004,                     // Animation speed
+  }
+});
 ```
 
-## Visual Design
+## Integration with React Projects
 
-- **Red text labels**: Attacker cities/countries
-- **White text labels**: Target cities/countries  
-- **White attack lines**: Animated paths showing attack flow
-- **Pulsing markers**: City locations with wave animations
-- **Manual controls**: Click and drag to rotate, scroll to zoom
+### Step-by-Step Integration
 
-## Performance
+1. **Copy Module Files**
+   ```bash
+   # In your 3D Earth module directory
+   npm run build-module
+   
+   # Copy to your React project
+   mkdir -p /path/to/your/react-project/src/modules/earth-module
+   cp -r dist/ /path/to/your/react-project/src/modules/earth-module/
+   cp -r static/ /path/to/your/react-project/public/
+   ```
 
-- Optimized for real-time threat monitoring
-- Smooth 60fps animations
-- Efficient rendering with Three.js WebGL
-- Supports dozens of simultaneous attack paths
+2. **Update Your React Component**
+   Use the provided `earthold.jsx` as a template, which includes:
+   - Proper module loading with error handling
+   - Loading states for better UX
+   - Cleanup on component unmount
+   - Integration with existing UI components
 
-## File Structure
+3. **Add Required Styles**
+   ```css
+   .threat-map-page {
+     position: relative;
+     width: 100%;
+     height: 100vh;
+     overflow: hidden;
+   }
+
+   .earth-layer {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     z-index: 1;
+   }
+
+   .earth-canvas {
+     width: 100%;
+     height: 100%;
+   }
+
+   .content-layer {
+     position: relative;
+     z-index: 2;
+     pointer-events: none;
+   }
+
+   .earth-error, .earth-loading {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     height: 100vh;
+     color: white;
+     text-align: center;
+   }
+   ```
+
+### Asset Management
+
+The module requires these static assets to be available at `/static/`:
 
 ```
-src/
-├── ts/
-│   ├── world/
-│   │   ├── Earth.ts        # Main Earth visualization class
-│   │   ├── Word.ts         # World controller and configuration
-│   │   └── Resources.ts    # Asset loading
-│   ├── Utils/
-│   │   ├── common.ts       # 3D geometry utilities
-│   │   └── arc.ts         # Flight path calculations
-│   └── EarthModule.ts     # Module export interface
-static/
-└── images/earth/          # Earth textures and assets
+public/
+├── static/
+│   └── images/
+│       └── earth/
+│           ├── earth.jpg          # Earth texture
+│           ├── label-old.png      # City label background
+│           ├── aperture.jpg       # Atmospheric effect
+│           ├── glow.png          # Glow effect
+│           ├── gradient.png      # Gradient texture
+│           ├── guangquan.png     # Light ring effect
+│           ├── lightray.png      # Light ray effect
+│           ├── redCircle.png     # Red circle marker
+│           └── earth-aperture.jpg # Earth aperture effect
 ```
 
-## Browser Support
+## API Reference
 
-- Chrome 60+
-- Firefox 60+  
-- Safari 12+
-- Edge 79+
+### EarthModule Class
+
+#### Methods
+
+- **`init(options: EarthModuleOptions): Promise<void>`**  
+  Initializes the Earth visualization with the provided configuration.
+
+- **`updateAttackData(newAttackData: AttackData[]): void`**  
+  Updates attack data for real-time threat visualization.
+
+- **`destroy(): void`**  
+  Cleans up all resources and disposes of Three.js objects.
+
+- **`isReady(): boolean`**  
+  Returns `true` if the module is initialized and ready.
+
+## Real-time SIEM Integration
+
+```javascript
+// Example: Update threats from your SIEM API
+const updateThreats = async () => {
+  const response = await fetch('/api/siem/active-threats');
+  const threats = await response.json();
+  
+  // Convert SIEM data to AttackData format
+  const attackData = threats.map(threat => ({
+    startArray: {
+      name: threat.sourceLocation,
+      N: threat.sourceLat,
+      E: threat.sourceLng
+    },
+    endArray: threat.targets.map(target => ({
+      name: target.location,
+      N: target.lat,
+      E: target.lng
+    }))
+  }));
+  
+  // Update visualization
+  earthInstance.updateAttackData(attackData);
+};
+```
+
+## Development
+
+### Building the Module
+
+```bash
+# Install dependencies
+npm install
+
+# Development server (for module testing)
+npm run dev
+
+# Build for production/distribution
+npm run build-module
+
+# Lint code
+npm run lint
+```
+
+## Browser Compatibility
+
+- **Chrome**: 58+
+- **Firefox**: 60+
+- **Safari**: 12+
+- **Edge**: 79+
+- **IE**: 11+ (with polyfills)
 
 ## License
 

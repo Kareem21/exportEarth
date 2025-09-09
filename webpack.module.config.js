@@ -8,10 +8,12 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
     library: {
-      name: '3dEarthModule',
+      name: 'EarthModule',
       type: 'umd',
+      export: 'default',
     },
     globalObject: 'typeof self !== "undefined" ? self : this',
+    clean: true,
   },
   externals: {
     'react': 'react',
@@ -60,4 +62,5 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
+  devtool: 'source-map',
 }
