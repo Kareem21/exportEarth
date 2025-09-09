@@ -1,7 +1,5 @@
-import World  from './world/Word'
+// Main export file for the Earth Module
+export { EarthModule, AttackData, EarthModuleOptions } from './EarthModule';
 
-// earth-canvas
-const dom: HTMLElement = document.querySelector('#earth-canvas')
-new World({
-  dom,
-})
+// Export the class as default for easier importing
+export { EarthModule as default } from './EarthModule';

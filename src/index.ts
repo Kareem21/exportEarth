@@ -1,3 +1,5 @@
 // Main export file for the Earth Module
 export { EarthModule, AttackData, EarthModuleOptions } from './ts/EarthModule';
-export { default } from './ts/EarthModule';
+
+// Export the class as default for easier importing
+export { EarthModule as default } from './ts/EarthModule';

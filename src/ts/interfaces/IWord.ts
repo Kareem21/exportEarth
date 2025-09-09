@@ -14,27 +14,27 @@ export interface AttackData {
 export interface IWord {
   dom: HTMLElement,
   data?: AttackData[], // Dynamic attack data
-  earth?: {
-    radius?: number,
-    rotateSpeed?: number,
-    isRotation?: boolean
+  earth: {
+    radius: number,
+    rotateSpeed: number,
+    isRotation: boolean
   },
-  satellite?: {
-    show?: boolean,
-    rotateSpeed?: number,
-    size?: number,
-    number?: number
+  satellite: {
+    show: boolean,
+    rotateSpeed: number,
+    size: number,
+    number: number
   },
-  punctuation?: {
-    circleColor?: number,
-    lightColumn?: {
-      startColor?: number,
-      endColor?: number,
+  punctuation: {
+    circleColor: number,
+    lightColumn: {
+      startColor: number,
+      endColor: number,
     },
   },
-  flyLine?: {
-    color?: number,
-    flyLineColor?: number,
-    speed?: number,
+  flyLine: {
+    color: number,
+    flyLineColor: number,
+    speed: number,
   }
 }

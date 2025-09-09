@@ -16,29 +16,7 @@ export interface AttackData {
 export interface EarthModuleOptions {
   dom: HTMLElement,
   attackData?: AttackData[], // Optional, defaults to demo data if not provided
-  earth?: {
-    radius?: number,
-    rotateSpeed?: number,
-    isRotation?: boolean
-  },
-  satellite?: {
-    show?: boolean,
-    rotateSpeed?: number,
-    size?: number,
-    number?: number
-  },
-  punctuation?: {
-    circleColor?: number,
-    lightColumn?: {
-      startColor?: number,
-      endColor?: number,
-    },
-  },
-  flyLine?: {
-    color?: number,
-    flyLineColor?: number,
-    speed?: number,
-  }
+  animationSpeed?: number, // Optional, defaults to 1.0 (0.5x to 2x range)
 }
 
 export class EarthModule {
@@ -47,7 +25,9 @@ export class EarthModule {
   private html2canvasElement: HTMLElement | null = null;
   private stylesElement: HTMLElement | null = null;
 
-  constructor() {}
+  constructor() {
+    // Initialize EarthModule instance
+  }
 
   /**
    * Creates the html2canvas element required for city label rendering
@@ -155,32 +135,34 @@ export class EarthModule {
     ];
 
     const attackData = options.attackData || defaultAttackData;
+    const animationSpeed = Math.max(0.5, Math.min(2.0, options.animationSpeed || 1.0));
 
     this.world = new World({
       dom: options.dom,
       data: attackData,
+      // Hardcoded settings - keep exact same visual appearance
       earth: {
-        radius: options.earth?.radius || 50,
-        rotateSpeed: options.earth?.rotateSpeed || 0.002,
-        isRotation: options.earth?.isRotation !== false
+        radius: 50,
+        rotateSpeed: 0.002 * animationSpeed,
+        isRotation: true
       },
       satellite: {
-        show: options.satellite?.show !== false,
-        rotateSpeed: options.satellite?.rotateSpeed || -0.01,
-        size: options.satellite?.size || 1,
-        number: options.satellite?.number || 2
+        show: true,
+        rotateSpeed: -0.01 * animationSpeed,
+        size: 1,
+        number: 2
       },
       punctuation: {
-        circleColor: options.punctuation?.circleColor || 0x3892ff,
+        circleColor: 0x3892ff,
         lightColumn: {
-          startColor: options.punctuation?.lightColumn?.startColor || 0xe4007f,
-          endColor: options.punctuation?.lightColumn?.endColor || 0xffffff,
+          startColor: 0xe4007f,
+          endColor: 0xffffff,
         },
       },
       flyLine: {
-        color: options.flyLine?.color || 0xf3ae76,
-        flyLineColor: options.flyLine?.flyLineColor || 0xff7714,
-        speed: options.flyLine?.speed || 0.004,
+        color: 0xf3ae76,
+        flyLineColor: 0xff7714,
+        speed: 0.004 * animationSpeed,
       }
     });
 
@@ -188,7 +170,7 @@ export class EarthModule {
   }
 
   /**
-   * Update attack data dynamically (for real-time SIEM updates)
+   * Update attack data dynamically (for real-time updates)
    * @param newAttackData New attack data to visualize
    */
   updateAttackData(newAttackData: AttackData[]): void {
@@ -201,6 +183,21 @@ export class EarthModule {
     // In a more advanced version, we could implement dynamic updates
     console.log('Updating attack data:', newAttackData);
     // TODO: Implement dynamic data updates without full recreation
+  }
+
+  /**
+   * Update animation speed dynamically
+   * @param speed Animation speed multiplier (0.5x to 2x)
+   */
+  updateAnimationSpeed(speed: number): void {
+    const clampedSpeed = Math.max(0.5, Math.min(2.0, speed));
+    if (!this.isInitialized || !this.world) {
+      console.warn('EarthModule is not initialized. Call init() first.');
+      return;
+    }
+
+    console.log('Updating animation speed:', clampedSpeed);
+    // TODO: Implement dynamic animation speed updates
   }
 
   /**
