@@ -3,7 +3,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   mode: 'production',
-  entry: './src/index.ts',
+  entry: './src/ts/index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
@@ -51,14 +51,14 @@ module.exports = {
         test: /\.(glsl|vs|fs)$/,
         loader: 'ts-shader-loader',
       },
+      // Bundle images as data URLs
+      {
+        test: /\.(png|jpe?g|gif)$/i,
+        type: 'asset/inline',
+      },
     ],
   },
-  plugins: [
-    // Copy static assets
-    new CopyWebpackPlugin({
-      patterns: [{ from: path.resolve(__dirname, './static'), to: 'static' }],
-    }),
-  ],
+  plugins: [],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },

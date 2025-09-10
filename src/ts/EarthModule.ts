@@ -241,5 +241,5 @@ export class EarthModule {
   }
 }
 
-// Export singleton instance for easy use
-export default new EarthModule();
+// Export the class - users will instantiate it themselves
+export default EarthModule;
