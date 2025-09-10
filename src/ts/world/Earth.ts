@@ -626,7 +626,7 @@ export default class earth {
     this.options.flyLine.speed = speed;
   }
 
-  // Method to update dot speed from React
+  // Method to update dot speed from React - allows dynamic control from frontend
   setDotSpeed(speed: number) {
     this.options.flyLine.speed = speed;
   }
