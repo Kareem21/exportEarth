@@ -19,6 +19,7 @@ import React, { useEffect, useRef, useState } from 'react';
 function Earth() {
   const canvasRef = useRef(null);
   const [earthInstance, setEarthInstance] = useState(null);
+  const [animationSpeed, setAnimationSpeed] = useState(0.01);
 
   useEffect(() => {
     const loadEarth = async () => {
@@ -53,7 +54,38 @@ function Earth() {
     };
   }, []);
 
-  return <div ref={canvasRef} style={{ width: '100%', height: '100vh' }} />;
+  // Update animation speed when slider changes
+  useEffect(() => {
+    if (earthInstance) {
+      earthInstance.setAnimationSpeed(animationSpeed);
+    }
+  }, [animationSpeed, earthInstance]);
+
+  return (
+    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      {/* Canvas for 3D Earth */}
+      <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+      
+      {/* Hidden element required for city name text rendering */}
+      <div id="html2canvas" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}></div>
+      
+      {/* Animation speed control */}
+      <div style={{ position: 'absolute', top: '20px', left: '20px', color: 'white', zIndex: 1000 }}>
+        <label>
+          Animation Speed: {animationSpeed.toFixed(3)}
+          <input
+            type="range"
+            min="0.001"
+            max="0.05"
+            step="0.001"
+            value={animationSpeed}
+            onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+            style={{ display: 'block', marginTop: '5px' }}
+          />
+        </label>
+      </div>
+    </div>
+  );
 }
 
 export default Earth;

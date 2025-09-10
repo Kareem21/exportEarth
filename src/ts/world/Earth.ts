@@ -621,4 +621,9 @@ export default class earth {
 
   }
 
+  // Method to update animation speed from React
+  setAnimationSpeed(speed: number) {
+    this.options.flyLine.speed = speed;
+  }
+
 }
