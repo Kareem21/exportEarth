@@ -131,10 +131,10 @@ interface AttackData {
 ### Hardcoded Visual Settings
 
 All visual settings are now hardcoded to maintain consistency:
-- **Earth**: 50 radius, slow rotation, high-quality textures
+- **Earth**: 50 radius, no automatic rotation, high-quality textures
 - **Satellites**: 2 orbital rings with animated satellites
 - **Colors**: Blue markers (0x3892ff), pink-to-white light columns (0xe4007f → 0xffffff)
-- **Flight Lines**: Orange paths (0xf3ae76) with red animated lines (0xff7714)
+- **Flight Lines**: White paths (0xffffff) with white animated lines (0xffffff)
 - **Effects**: Atmospheric glow, particle stars, expanding wave rings
 
 ## Complete React Component Example

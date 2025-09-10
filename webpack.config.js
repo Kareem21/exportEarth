@@ -14,7 +14,7 @@ module.exports = {
     port: '8088'
   },
   // Specify entry file
-  entry: './src/ts/index.ts',
+  entry: './src/ts/demo.ts',
   // Specify directory where packaged files are located
   output: {
     // Specify directory for packaged files

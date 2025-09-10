@@ -144,7 +144,7 @@ export class EarthModule {
       earth: {
         radius: 50,
         rotateSpeed: 0.002 * animationSpeed,
-        isRotation: true
+        isRotation: false
       },
       satellite: {
         show: true,
@@ -160,8 +160,8 @@ export class EarthModule {
         },
       },
       flyLine: {
-        color: 0xf3ae76,
-        flyLineColor: 0xff7714,
+        color: 0xffffff,
+        flyLineColor: 0xffffff,
         speed: 0.004 * animationSpeed,
       }
     });
