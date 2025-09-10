@@ -135,7 +135,7 @@ export class EarthModule {
     ];
 
     const attackData = options.attackData || defaultAttackData;
-    const animationSpeed = Math.max(0.5, Math.min(2.0, options.animationSpeed || 1.0));
+    const animationSpeed = Math.max(0.5, Math.min(2.0, options.animationSpeed || 2.0));
 
     this.world = new World({
       dom: options.dom,
