@@ -201,6 +201,22 @@ export class EarthModule {
   }
 
   /**
+   * Update dot speed dynamically
+   * @param speed Dot animation speed (0.001 to 0.1)
+   */
+  setDotSpeed(speed: number): void {
+    const clampedSpeed = Math.max(0.001, Math.min(0.1, speed));
+    if (!this.isInitialized || !this.world) {
+      console.warn('EarthModule is not initialized. Call init() first.');
+      return;
+    }
+
+    if (this.world.earth) {
+      this.world.earth.setDotSpeed(clampedSpeed);
+    }
+  }
+
+  /**
    * Cleanup method for React component unmounting
    */
   destroy(): void {

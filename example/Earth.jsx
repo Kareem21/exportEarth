@@ -1,10 +1,12 @@
-// Example React component showing how to use the 3D Earth module
+// Example React component showing how to use the 3D Earth module with dynamic dot speed control
 import React, { useRef, useEffect, useState } from 'react';
 import EarthModule from '3d-earth-module';
 
 const Earth = ({ attackData }) => {
   const containerRef = useRef();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [earthInstance, setEarthInstance] = useState(null);
+  const [dotSpeed, setDotSpeed] = useState(0.004);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -12,7 +14,8 @@ const Earth = ({ attackData }) => {
     // Initialize the Earth module
     const initEarth = async () => {
       try {
-        await EarthModule.init({
+        const instance = new EarthModule();
+        await instance.init({
           dom: containerRef.current,
           attackData: attackData || [
             {
@@ -36,30 +39,10 @@ const Earth = ({ attackData }) => {
             }
           ],
           // Optional configuration
-          earth: {
-            radius: 50,
-            rotateSpeed: 0.002,
-            isRotation: true
-          },
-          satellite: {
-            show: true,
-            rotateSpeed: -0.01,
-            size: 1,
-            number: 2
-          },
-          punctuation: {
-            circleColor: 0x3892ff,
-            lightColumn: {
-              startColor: 0xe4007f,
-              endColor: 0xffffff,
-            },
-          },
-          flyLine: {
-            color: 0xf3ae76,
-            flyLineColor: 0xff7714,
-            speed: 0.004,
-          }
+          animationSpeed: 1.0
         });
+        
+        setEarthInstance(instance);
         setIsLoaded(true);
       } catch (error) {
         console.error('Failed to initialize Earth:', error);
@@ -70,20 +53,63 @@ const Earth = ({ attackData }) => {
 
     // Cleanup on unmount
     return () => {
-      EarthModule.destroy();
+      if (earthInstance) {
+        earthInstance.destroy();
+        setEarthInstance(null);
+      }
       setIsLoaded(false);
     };
   }, []);
 
   // Update attack data when it changes
   useEffect(() => {
-    if (isLoaded && attackData) {
-      EarthModule.updateAttackData(attackData);
+    if (isLoaded && attackData && earthInstance) {
+      earthInstance.updateAttackData(attackData);
     }
-  }, [attackData, isLoaded]);
+  }, [attackData, isLoaded, earthInstance]);
+
+  // Handle dot speed change
+  const handleDotSpeedChange = (event) => {
+    const newSpeed = parseFloat(event.target.value);
+    setDotSpeed(newSpeed);
+    
+    if (earthInstance && isLoaded) {
+      earthInstance.setDotSpeed(newSpeed);
+    }
+  };
 
   return (
-    <div className=\"earth-container\" style={{ width: '100%', height: '500px' }}>
+    <div className="earth-container" style={{ width: '100%', height: '500px', position: 'relative' }}>
+      {/* Dot Speed Control */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '10px',
+        zIndex: 1000,
+        background: 'rgba(0, 0, 0, 0.8)',
+        padding: '10px',
+        borderRadius: '5px',
+        color: 'white',
+        fontSize: '14px'
+      }}>
+        <div style={{ marginBottom: '8px' }}>
+          Dot Speed: {dotSpeed.toFixed(3)}
+        </div>
+        <input
+          type="range"
+          min="0.001"
+          max="0.1"
+          step="0.001"
+          value={dotSpeed}
+          onChange={handleDotSpeedChange}
+          style={{ width: '150px' }}
+          disabled={!isLoaded}
+        />
+        <div style={{ marginTop: '5px', fontSize: '12px', opacity: 0.8 }}>
+          <div>Slow ← → Fast</div>
+        </div>
+      </div>
+
       <div 
         ref={containerRef} 
         style={{ 
