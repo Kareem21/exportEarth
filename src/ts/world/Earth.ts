@@ -145,6 +145,7 @@ export default class earth {
 
   }
 
+
   async init(): Promise<void> {
     return new Promise(async (resolve) => {
 
@@ -636,10 +637,10 @@ export default class earth {
    * @param newData New attack data to visualize
    */
   async updateVisualization(newData: options['data']): Promise<void> {
+    // Store old data for comparison (outside try block for proper scoping)
+    const oldData = this.options.data;
+    
     try {
-      // Store old data for comparison
-      const oldData = this.options.data;
-      
       // Update internal data
       this.options.data = newData;
       
@@ -673,15 +674,16 @@ export default class earth {
         this.markupPoint.remove(child);
         
         // Dispose of materials and geometries to prevent memory leaks
-        if ('material' in child && child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(mat => mat.dispose && mat.dispose());
+        const childWithMaterial = child as any;
+        if (childWithMaterial.material) {
+          if (Array.isArray(childWithMaterial.material)) {
+            childWithMaterial.material.forEach((mat: any) => mat.dispose && mat.dispose());
           } else {
-            child.material.dispose && child.material.dispose();
+            childWithMaterial.material.dispose && childWithMaterial.material.dispose();
           }
         }
-        if ('geometry' in child && child.geometry) {
-          child.geometry.dispose && child.geometry.dispose();
+        if (childWithMaterial.geometry) {
+          childWithMaterial.geometry.dispose && childWithMaterial.geometry.dispose();
         }
       }
     }
@@ -694,15 +696,16 @@ export default class earth {
         this.flyLineArcGroup.remove(child);
         
         // Dispose of materials and geometries
-        if ('material' in child && child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(mat => mat.dispose && mat.dispose());
+        const childWithMaterial = child as any;
+        if (childWithMaterial.material) {
+          if (Array.isArray(childWithMaterial.material)) {
+            childWithMaterial.material.forEach((mat: any) => mat.dispose && mat.dispose());
           } else {
-            child.material.dispose && child.material.dispose();
+            childWithMaterial.material.dispose && childWithMaterial.material.dispose();
           }
         }
-        if ('geometry' in child && child.geometry) {
-          child.geometry.dispose && child.geometry.dispose();
+        if (childWithMaterial.geometry) {
+          childWithMaterial.geometry.dispose && childWithMaterial.geometry.dispose();
         }
       }
       
@@ -731,5 +734,6 @@ export default class earth {
     // Clear wave mesh array
     this.waveMeshArr = [];
   }
+
 
 }
