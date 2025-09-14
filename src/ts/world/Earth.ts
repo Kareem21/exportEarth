@@ -631,4 +631,105 @@ export default class earth {
     this.options.flyLine.speed = speed;
   }
 
+  /**
+   * Update visualization with new attack data without full recreation
+   * @param newData New attack data to visualize
+   */
+  async updateVisualization(newData: options['data']): Promise<void> {
+    try {
+      // Store old data for comparison
+      const oldData = this.options.data;
+      
+      // Update internal data
+      this.options.data = newData;
+      
+      // Clear existing dynamic elements
+      this.clearDynamicElements();
+      
+      // Recreate dynamic elements with new data
+      await this.createMarkupPoint();
+      await this.createSpriteLabel();
+      this.createFlyLine();
+      
+      console.log(`Updated visualization with ${newData.length} attack routes`);
+    } catch (error) {
+      console.error('Failed to update visualization:', error);
+      // Fallback: restore old data if update fails
+      if (oldData) {
+        this.options.data = oldData;
+      }
+    }
+  }
+
+  /**
+   * Clear all dynamic 3D elements that depend on attack data
+   */
+  private clearDynamicElements(): void {
+    // Clear city markers and related elements
+    if (this.markupPoint) {
+      // Remove all children from markup point group
+      while (this.markupPoint.children.length > 0) {
+        const child = this.markupPoint.children[0];
+        this.markupPoint.remove(child);
+        
+        // Dispose of materials and geometries to prevent memory leaks
+        if ('material' in child && child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => mat.dispose && mat.dispose());
+          } else {
+            child.material.dispose && child.material.dispose();
+          }
+        }
+        if ('geometry' in child && child.geometry) {
+          child.geometry.dispose && child.geometry.dispose();
+        }
+      }
+    }
+
+    // Clear flight lines
+    if (this.flyLineArcGroup) {
+      // Remove all children from flight line group
+      while (this.flyLineArcGroup.children.length > 0) {
+        const child = this.flyLineArcGroup.children[0];
+        this.flyLineArcGroup.remove(child);
+        
+        // Dispose of materials and geometries
+        if ('material' in child && child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => mat.dispose && mat.dispose());
+          } else {
+            child.material.dispose && child.material.dispose();
+          }
+        }
+        if ('geometry' in child && child.geometry) {
+          child.geometry.dispose && child.geometry.dispose();
+        }
+      }
+      
+      // Clear flight line array
+      this.flyLineArcGroup.userData['flyLineArray'] = [];
+    }
+
+    // Clear city labels from earth
+    if (this.earth) {
+      // Remove sprite labels that were added directly to earth
+      const spritesToRemove: any[] = [];
+      this.earth.traverse((child) => {
+        if (child.type === 'Sprite') {
+          spritesToRemove.push(child);
+        }
+      });
+      
+      spritesToRemove.forEach(sprite => {
+        this.earth.remove(sprite);
+        if (sprite.material) {
+          sprite.material.dispose();
+        }
+      });
+    }
+
+    // Clear wave mesh array
+    this.waveMeshArr = [];
+  }
+
 }

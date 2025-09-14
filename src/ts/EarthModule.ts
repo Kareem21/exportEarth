@@ -179,10 +179,19 @@ export class EarthModule {
       return;
     }
 
-    // For now, we'll need to recreate the earth with new data
-    // In a more advanced version, we could implement dynamic updates
-    console.log('Updating attack data:', newAttackData);
-    // TODO: Implement dynamic data updates without full recreation
+    if (!this.world.earth) {
+      console.warn('Earth instance not ready yet. Try again after initialization is complete.');
+      return;
+    }
+
+    // Validate the new attack data
+    if (!Array.isArray(newAttackData)) {
+      console.error('Invalid attack data format. Expected an array.');
+      return;
+    }
+
+    // Update the visualization dynamically without full recreation
+    this.world.earth.updateVisualization(newAttackData);
   }
 
   /**

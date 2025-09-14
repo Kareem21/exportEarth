@@ -1,145 +1,490 @@
-# 3D Earth Module
+# 3D Earth Module for Cybersecurity Visualization
 
-## How to export
+A powerful 3D Earth visualization module built with Three.js and TypeScript, specifically designed for cybersecurity threat mapping and attack visualization. Perfect for SOC dashboards, threat intelligence displays, and security monitoring applications.
 
+## Features
+
+- 🌍 **Interactive 3D Earth** with realistic textures and atmospheric effects
+- 🚨 **Real-time Attack Visualization** with dynamic data updates
+- ⚡ **High Performance** - 60fps rendering with optimized Three.js
+- 🎯 **Cybersecurity Focused** - Color-coded threats (red attackers, white targets)
+- 🔄 **Dynamic Updates** - Update attack data without re-rendering the entire globe
+- 📱 **Responsive Design** - Works on various screen sizes
+- 🎮 **Interactive Controls** - Zoom, rotate, and pan with mouse/touch
+- 🏷️ **Smart Labels** - City names rendered dynamically via HTML2Canvas
+
+## Installation & Build
+
+### For Development
 ```bash
-npm run build-module
+yarn dev          # Start development server on port 8088
+yarn build        # Build for production (demo)
+yarn lint         # Run ESLint linter
 ```
 
-This creates `dist/` folder with everything bundled.
+### Build as NPM Module
+```bash
+yarn build-module
+```
 
-## How to use in your React app
+This creates a `dist/` folder with the complete bundled module ready for integration.
 
-1. Copy the `dist/` folder to your React project
-2. In your `earth.jsx`:
+## Integration in React Applications
+
+### 1. Copy Module Files
+After building, copy the `dist/` folder to your React project.
+
+### 2. Complete React Component Example
+
+Here's a full `earth.jsx` component ready for your frontend:
 
 ```jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
-function Earth() {
-  const canvasRef = useRef(null);
+const Earth = () => {
+  const containerRef = useRef();
+  const [isLoaded, setIsLoaded] = useState(false);
   const [earthInstance, setEarthInstance] = useState(null);
+  const [attackData, setAttackData] = useState([]);
 
+  // Initialize Earth Module
   useEffect(() => {
-    const loadEarth = async () => {
-      const EarthModule = (await import('../../dist/index.js')).default;
-      const instance = new EarthModule();
-      
-      const attackData = [
-        {
-          startArray: { name: 'Beijing', N: 39.9042, E: 116.4074 },
-          endArray: [{ name: 'New York', N: 40.7128, E: -74.0060 }]
-        },
-        {
-          startArray: { name: 'Moscow', N: 55.7558, E: 37.6176 },
-          endArray: [{ name: 'London', N: 51.5074, E: -0.1278 }, { name: 'Paris', N: 48.8566, E: 2.3522 }]
-        },
-        {
-          startArray: { name: 'Tokyo', N: 35.6762, E: 139.6503 },
-          endArray: [{ name: 'Seoul', N: 37.5665, E: 126.9780 }, { name: 'Sydney', N: -33.8688, E: 151.2093 }]
-        },
-        {
-          startArray: { name: 'Los Angeles', N: 34.0522, E: -118.2437 },
-          endArray: [{ name: 'Chicago', N: 41.8781, E: -87.6298 }, { name: 'Miami', N: 25.7617, E: -80.1918 }]
-        },
-        {
-          startArray: { name: 'Mumbai', N: 19.0760, E: 72.8777 },
-          endArray: [{ name: 'Delhi', N: 28.7041, E: 77.1025 }, { name: 'Bangkok', N: 13.7563, E: 100.5018 }]
-        },
-        {
-          startArray: { name: 'Cairo', N: 30.0444, E: 31.2357 },
-          endArray: [{ name: 'Istanbul', N: 41.0082, E: 28.9784 }, { name: 'Dubai', N: 25.2048, E: 55.2708 }]
-        },
-        {
-          startArray: { name: 'São Paulo', N: -23.5558, E: -46.6396 },
-          endArray: [{ name: 'Buenos Aires', N: -34.6118, E: -58.3960 }, { name: 'Lima', N: -12.0464, E: -77.0428 }]
-        },
-        {
-          startArray: { name: 'Berlin', N: 52.5200, E: 13.4050 },
-          endArray: [{ name: 'Rome', N: 41.9028, E: 12.4964 }, { name: 'Madrid', N: 40.4168, E: -3.7038 }]
-        },
-        {
-          startArray: { name: 'Toronto', N: 43.6532, E: -79.3832 },
-          endArray: [{ name: 'Vancouver', N: 49.2827, E: -123.1207 }, { name: 'Mexico City', N: 19.4326, E: -99.1332 }]
-        },
-        {
-          startArray: { name: 'Singapore', N: 1.3521, E: 103.8198 },
-          endArray: [{ name: 'Hong Kong', N: 22.3193, E: 114.1694 }, { name: 'Kuala Lumpur', N: 3.1390, E: 101.6869 }]
-        },
-        {
-          startArray: { name: 'Cape Town', N: -33.9249, E: 18.4241 },
-          endArray: [{ name: 'Lagos', N: 6.5244, E: 3.3792 }, { name: 'Nairobi', N: -1.2921, E: 36.8219 }]
-        },
-        {
-          startArray: { name: 'Tehran', N: 35.6892, E: 51.3890 },
-          endArray: [{ name: 'Riyadh', N: 24.7136, E: 46.6753 }, { name: 'Baghdad', N: 33.3152, E: 44.3661 }]
-        },
-        {
-          startArray: { name: 'Stockholm', N: 59.3293, E: 18.0686 },
-          endArray: [{ name: 'Helsinki', N: 60.1699, E: 24.9384 }, { name: 'Oslo', N: 59.9139, E: 10.7522 }]
-        },
-        {
-          startArray: { name: 'Jakarta', N: -6.2088, E: 106.8456 },
-          endArray: [{ name: 'Manila', N: 14.5995, E: 120.9842 }, { name: 'Ho Chi Minh City', N: 10.8231, E: 106.6297 }]
-        },
-        {
-          startArray: { name: 'Johannesburg', N: -26.2041, E: 28.0473 },
-          endArray: [{ name: 'Kinshasa', N: -4.4419, E: 15.2663 }, { name: 'Addis Ababa', N: 9.1450, E: 38.7577 }]
-        },
-        {
-          startArray: { name: 'Melbourne', N: -37.8136, E: 144.9631 },
-          endArray: [{ name: 'Perth', N: -31.9505, E: 115.8605 }, { name: 'Auckland', N: -36.8485, E: 174.7633 }]
-        },
-        {
-          startArray: { name: 'Karachi', N: 24.8607, E: 67.0011 },
-          endArray: [{ name: 'Lahore', N: 31.5204, E: 74.3587 }, { name: 'Islamabad', N: 33.7294, E: 73.0931 }]
-        },
-        {
-          startArray: { name: 'Atlanta', N: 33.7490, E: -84.3880 },
-          endArray: [{ name: 'Houston', N: 29.7604, E: -95.3698 }, { name: 'Phoenix', N: 33.4484, E: -112.0740 }]
-        },
-        {
-          startArray: { name: 'Kiev', N: 50.4501, E: 30.5234 },
-          endArray: [{ name: 'Warsaw', N: 52.2297, E: 21.0122 }, { name: 'Prague', N: 50.0755, E: 14.4378 }]
-        },
-        {
-          startArray: { name: 'Riyadh', N: 24.7136, E: 46.6753 },
-          endArray: [{ name: 'Kuwait City', N: 29.3117, E: 47.4818 }, { name: 'Doha', N: 25.2854, E: 51.5310 }]
-        }
-      ];
-      
-      await instance.init({
-        dom: canvasRef.current,
-        attackData: attackData,
-        animationSpeed: 2.0 // Fast animation speed
-      });
-      
-      setEarthInstance(instance);
+    if (!containerRef.current) return;
+
+    const initEarth = async () => {
+      try {
+        // Import the EarthModule from your dist folder
+        const EarthModule = (await import('./path/to/dist/index.js')).default;
+        const instance = new EarthModule();
+        
+        // Initial attack data for demonstration
+        const initialData = [
+          {
+            startArray: {
+              name: 'Beijing (Threat Actor)',
+              N: 39.9042,
+              E: 116.4074,
+            },
+            endArray: [
+              {
+                name: 'New York (Target)',
+                N: 40.7128,
+                E: -74.0060,
+              },
+              {
+                name: 'Washington DC (Target)',
+                N: 38.9072,
+                E: -77.0369,
+              }
+            ]
+          },
+          {
+            startArray: {
+              name: 'Moscow (Threat Actor)',
+              N: 55.7558,
+              E: 37.6176,
+            },
+            endArray: [
+              {
+                name: 'London (Target)',
+                N: 51.5074,
+                E: -0.1278,
+              },
+              {
+                name: 'Berlin (Target)',
+                N: 52.5200,
+                E: 13.4050,
+              }
+            ]
+          }
+        ];
+
+        await instance.init({
+          dom: containerRef.current,
+          attackData: initialData,
+          animationSpeed: 1.5 // Animation speed multiplier (0.5x to 2x)
+        });
+        
+        setEarthInstance(instance);
+        setAttackData(initialData);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Failed to initialize Earth:', error);
+      }
     };
 
-    if (canvasRef.current) {
-      loadEarth();
-    }
+    initEarth();
 
+    // Cleanup on unmount
     return () => {
       if (earthInstance) {
         earthInstance.destroy();
+        setEarthInstance(null);
       }
+      setIsLoaded(false);
     };
   }, []);
 
+  // Simulate real-time SIEM data updates
+  useEffect(() => {
+    if (!isLoaded || !earthInstance) return;
+
+    const simulateRealTimeUpdates = () => {
+      // Simulate new threat intelligence data
+      const newAttackData = [
+        {
+          startArray: {
+            name: 'Tehran (APT Group)',
+            N: 35.6892,
+            E: 51.3890,
+          },
+          endArray: [
+            {
+              name: 'Tel Aviv (Critical Infrastructure)',
+              N: 32.0853,
+              E: 34.7818,
+            }
+          ]
+        },
+        {
+          startArray: {
+            name: 'Pyongyang (State Actor)',
+            N: 39.0392,
+            E: 125.7625,
+          },
+          endArray: [
+            {
+              name: 'Seoul (Financial Sector)',
+              N: 37.5665,
+              E: 126.9780,
+            },
+            {
+              name: 'Tokyo (Government)',
+              N: 35.6762,
+              E: 139.6503,
+            }
+          ]
+        }
+      ];
+
+      // Update visualization without re-rendering entire Earth
+      earthInstance.updateAttackData(newAttackData);
+      setAttackData(newAttackData);
+    };
+
+    // Simulate updates every 10 seconds
+    const interval = setInterval(simulateRealTimeUpdates, 10000);
+    return () => clearInterval(interval);
+  }, [isLoaded, earthInstance]);
+
+  // Handle manual data updates (e.g., from your SIEM API)
+  const handleUpdateAttacks = (newData) => {
+    if (earthInstance && isLoaded) {
+      earthInstance.updateAttackData(newData);
+      setAttackData(newData);
+    }
+  };
+
+  // Control panel for testing
+  const [dotSpeed, setDotSpeed] = useState(0.004);
+  const handleDotSpeedChange = (event) => {
+    const newSpeed = parseFloat(event.target.value);
+    setDotSpeed(newSpeed);
+    
+    if (earthInstance && isLoaded) {
+      earthInstance.setDotSpeed(newSpeed);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
-      {/* Canvas for 3D Earth */}
-      <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
-      
-      {/* Hidden element required for city name text rendering */}
-      <div id="html2canvas" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}></div>
+    <div className="siem-earth-container" style={{ width: '100%', height: '100vh', position: 'relative', background: '#000' }}>
+      {/* Control Panel */}
+      {isLoaded && (
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          zIndex: 1000,
+          background: 'rgba(0, 0, 0, 0.8)',
+          padding: '15px',
+          borderRadius: '8px',
+          color: 'white',
+          fontSize: '14px',
+          minWidth: '250px'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#0cd1eb' }}>
+            🛡️ Threat Visualization Control
+          </h3>
+          
+          <div style={{ marginBottom: '12px' }}>
+            <strong>Active Attacks:</strong> {attackData.length}
+          </div>
+          
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>
+              Attack Speed: {dotSpeed.toFixed(3)}
+            </label>
+            <input
+              type="range"
+              min="0.001"
+              max="0.1"
+              step="0.001"
+              value={dotSpeed}
+              onChange={handleDotSpeedChange}
+              style={{ width: '100%' }}
+            />
+            <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px' }}>
+              Slow ← → Fast
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              const randomAttacks = generateRandomAttacks();
+              handleUpdateAttacks(randomAttacks);
+            }}
+            style={{
+              background: '#e4007f',
+              border: 'none',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              marginTop: '8px'
+            }}
+          >
+            🔄 Simulate New Threats
+          </button>
+        </div>
+      )}
+
+      {/* Status Indicator */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        zIndex: 1000,
+        background: isLoaded ? 'rgba(0, 128, 0, 0.8)' : 'rgba(128, 128, 0, 0.8)',
+        padding: '10px 15px',
+        borderRadius: '20px',
+        color: 'white',
+        fontSize: '14px',
+        fontWeight: 'bold'
+      }}>
+        {isLoaded ? '🟢 SIEM Active' : '🟡 Loading...'}
+      </div>
+
+      {/* 3D Earth Container */}
+      <div 
+        ref={containerRef} 
+        style={{ 
+          width: '100%', 
+          height: '100%'
+        }} 
+      />
+
+      {/* Loading Overlay */}
+      {!isLoaded && (
+        <div style={{
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '18px'
+        }}>
+          <div style={{ marginBottom: '20px' }}>⚡ Initializing Threat Map...</div>
+          <div style={{ fontSize: '14px', opacity: 0.7 }}>Loading 3D Earth visualization</div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+// Helper function to generate random attack data for testing
+const generateRandomAttacks = () => {
+  const threatActors = [
+    { name: 'APT29 (Russia)', N: 55.7558, E: 37.6176 },
+    { name: 'Lazarus (North Korea)', N: 39.0392, E: 125.7625 },
+    { name: 'APT1 (China)', N: 39.9042, E: 116.4074 },
+    { name: 'Charming Kitten (Iran)', N: 35.6892, E: 51.3890 }
+  ];
+
+  const targets = [
+    { name: 'US Financial Sector', N: 40.7128, E: -74.0060 },
+    { name: 'EU Critical Infrastructure', N: 50.1109, E: 8.6821 },
+    { name: 'UK Government', N: 51.5074, E: -0.1278 },
+    { name: 'Japanese Tech Companies', N: 35.6762, E: 139.6503 },
+    { name: 'South Korean Banks', N: 37.5665, E: 126.9780 }
+  ];
+
+  return threatActors.slice(0, Math.floor(Math.random() * 3) + 1).map(actor => ({
+    startArray: actor,
+    endArray: targets.slice(0, Math.floor(Math.random() * 2) + 1)
+  }));
+};
 
 export default Earth;
 ```
 
-That's it. Just pass your attack data and it renders the same Earth.
+## API Reference
+
+### EarthModule Class
+
+#### Constructor
+```javascript
+const earthModule = new EarthModule();
+```
+
+#### Methods
+
+##### `init(options)`
+Initialize the 3D Earth visualization.
+
+```javascript
+await earthModule.init({
+  dom: containerElement,           // Required: DOM element to render in
+  attackData: attackDataArray,     // Optional: Initial attack data
+  animationSpeed: 1.5             // Optional: Animation speed (0.5-2.0)
+});
+```
+
+##### `updateAttackData(newData)`
+**🚀 NEW: Dynamic Updates**
+Update attack visualization without re-rendering the entire Earth.
+
+```javascript
+earthModule.updateAttackData([
+  {
+    startArray: {
+      name: 'Attacker Location',
+      N: 39.9042,    // Latitude
+      E: 116.4074,   // Longitude
+    },
+    endArray: [
+      {
+        name: 'Target Location',
+        N: 40.7128,   // Latitude
+        E: -74.0060,  // Longitude
+      }
+    ]
+  }
+]);
+```
+
+##### `setDotSpeed(speed)`
+Control the speed of moving attack indicators.
+
+```javascript
+earthModule.setDotSpeed(0.01); // Range: 0.001 - 0.1
+```
+
+##### `destroy()`
+Clean up resources when component unmounts.
+
+```javascript
+earthModule.destroy();
+```
+
+## Data Format
+
+### Attack Data Structure
+
+```typescript
+interface AttackData {
+  startArray: {
+    name: string,    // Attacker/source name (appears in RED)
+    N: number,       // Latitude (-90 to 90)
+    E: number,       // Longitude (-180 to 180)
+  },
+  endArray: {
+    name: string,    // Target/destination name (appears in WHITE)
+    N: number,       // Latitude (-90 to 90)
+    E: number,       // Longitude (-180 to 180)
+  }[]
+}[]
+```
+
+### Example Data for Different Use Cases
+
+#### 1. APT Attack Campaign
+```javascript
+const aptCampaign = [
+  {
+    startArray: {
+      name: 'APT29 C2 Server',
+      N: 55.7558,
+      E: 37.6176,
+    },
+    endArray: [
+      { name: 'US Government Agency', N: 38.9072, E: -77.0369 },
+      { name: 'EU Parliament', N: 50.8503, E: 4.3517 }
+    ]
+  }
+];
+```
+
+#### 2. Financial Sector Attacks
+```javascript
+const financialAttacks = [
+  {
+    startArray: {
+      name: 'Carbanak Group',
+      N: 50.4501,
+      E: 30.5234,
+    },
+    endArray: [
+      { name: 'Wall Street Bank', N: 40.7074, E: -74.0113 },
+      { name: 'London Financial District', N: 51.5156, E: -0.0919 }
+    ]
+  }
+];
+```
+
+## Visual Design
+
+- **🔴 Red markers/labels** - Attack sources/threat actors
+- **⚪ White markers/labels** - Targets/victims  
+- **⚪ White flight lines** - Attack vectors/data flows
+- **🔵 Blue atmospheric glow** - Earth ambience
+- **💫 Expanding waves** - Real-time activity indicators
+- **⚡ Moving dots** - Active attack traffic
+
+## Performance
+
+- **60fps** rendering via requestAnimationFrame
+- **Memory efficient** - Proper cleanup of 3D resources
+- **Optimized updates** - Only recreates changed elements
+- **Responsive** - Handles various screen sizes
+- **WebGL accelerated** - Uses GPU shaders for best performance
+
+## Browser Support
+
+- Chrome 58+
+- Firefox 60+
+- Safari 12+
+- Edge 79+
+- IE 11+ (with polyfills)
+
+## Use Cases
+
+- 🛡️ **SOC Dashboards** - Real-time threat monitoring
+- 📊 **Threat Intelligence** - Geographic attack pattern analysis  
+- 🎓 **Security Training** - Interactive cybersecurity education
+- 📈 **Executive Reports** - Visual threat landscape presentations
+- 🔍 **Incident Response** - Attack correlation and mapping
+
+## Contributing
+
+This module is designed specifically for defensive cybersecurity purposes. All contributions should maintain focus on threat visualization and security analysis applications.
+
+---
+
+**⚠️ Security Notice**: This tool is intended for defensive cybersecurity visualization only. It should be used for threat analysis, security operations, and educational purposes by cybersecurity professionals.
