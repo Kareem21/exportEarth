@@ -14,6 +14,8 @@ export interface AttackData {
 export interface IWord {
   dom: HTMLElement,
   data?: AttackData[], // Dynamic attack data
+  maxConcurrentAttacks?: number, // Optional limit on attacks shown
+  enableDifferentialUpdates?: boolean, // Enable smart diffing
   earth: {
     radius: number,
     rotateSpeed: number,

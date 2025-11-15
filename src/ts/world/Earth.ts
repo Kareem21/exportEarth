@@ -88,6 +88,11 @@ export default class earth {
   public isRotation: boolean;
   public flyLineArcGroup: Group;
 
+  // Label caching for performance optimization
+  private labelCache: Map<string, Texture>;
+  private labelCacheAttacker: Map<string, Texture>;
+  private labelCacheTarget: Map<string, Texture>;
+
   constructor(options: options) {
 
     this.options = options;
@@ -112,6 +117,11 @@ export default class earth {
 
     // Earth rotation
     this.isRotation = this.options.earth.isRotation
+
+    // Initialize label caches for performance
+    this.labelCache = new Map();
+    this.labelCacheAttacker = new Map();
+    this.labelCacheTarget = new Map();
 
     // Sweep light animation shader
     this.timeValue = 100
@@ -383,28 +393,41 @@ export default class earth {
       // Process attacker cities (startArray) - RED
       const attackerCity = item.startArray;
       const p1 = lon2xyz(this.options.earth.radius * 1.001, attackerCity.E, attackerCity.N);
-      const attackerDiv = `<div class="fire-div" style="
-        color: #ff0000;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        padding: 2px 6px;
-        background: rgba(0, 0, 0, 0.7);
-        border-radius: 4px;
-        border: 1px solid #ff0000;
-      ">${attackerCity.name}</div>`;
-      
-      const shareContent1 = document.getElementById("html2canvas");
-      shareContent1.innerHTML = attackerDiv;
-      const opts1 = {
-        backgroundColor: null,
-        scale: 4,
-        dpi: window.devicePixelRatio,
-      };
-      const canvas1 = await html2canvas(document.getElementById("html2canvas"), opts1)
-      const dataURL1 = canvas1.toDataURL("image/png");
-      const map1 = new TextureLoader().load(dataURL1);
+
+      // Check cache first for attacker label
+      let map1: Texture;
+      const attackerCacheKey = `attacker_${attackerCity.name}`;
+      if (this.labelCacheAttacker.has(attackerCacheKey)) {
+        map1 = this.labelCacheAttacker.get(attackerCacheKey)!;
+      } else {
+        // Generate new label texture
+        const attackerDiv = `<div class="fire-div" style="
+          color: #ff0000;
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+          font-weight: bold;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+          padding: 2px 6px;
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 4px;
+          border: 1px solid #ff0000;
+        ">${attackerCity.name}</div>`;
+
+        const shareContent1 = document.getElementById("html2canvas");
+        shareContent1.innerHTML = attackerDiv;
+        const opts1 = {
+          backgroundColor: null,
+          scale: 4,
+          dpi: window.devicePixelRatio,
+        };
+        const canvas1 = await html2canvas(document.getElementById("html2canvas"), opts1);
+        const dataURL1 = canvas1.toDataURL("image/png");
+        map1 = new TextureLoader().load(dataURL1);
+
+        // Cache the texture
+        this.labelCacheAttacker.set(attackerCacheKey, map1);
+      }
+
       const material1 = new SpriteMaterial({
         map: map1,
         transparent: true,
@@ -414,31 +437,44 @@ export default class earth {
       sprite1.scale.set(len1, 4, 1);
       sprite1.position.set(p1.x * 1.15, p1.y * 1.15, p1.z * 1.15);
       this.earth.add(sprite1);
-      
+
       // Process target cities (endArray) - WHITE
       await Promise.all(item.endArray.map(async e => {
         const p = lon2xyz(this.options.earth.radius * 1.001, e.E, e.N);
-        const div = `<div class="fire-div" style="
-          color: #ffffff;
-          font-family: Arial, sans-serif;
-          font-size: 14px;
-          font-weight: bold;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-          padding: 2px 6px;
-          background: rgba(0, 0, 0, 0.7);
-          border-radius: 4px;
-          border: 1px solid #ffffff;
-        ">${e.name}</div>`;
-        const shareContent = document.getElementById("html2canvas");
-        shareContent.innerHTML = div;
-        const opts = {
-          backgroundColor: null,
-          scale: 4,
-          dpi: window.devicePixelRatio,
-        };
-        const canvas = await html2canvas(document.getElementById("html2canvas"), opts)
-        const dataURL = canvas.toDataURL("image/png");
-        const map = new TextureLoader().load(dataURL);
+
+        // Check cache first for target label
+        let map: Texture;
+        const targetCacheKey = `target_${e.name}`;
+        if (this.labelCacheTarget.has(targetCacheKey)) {
+          map = this.labelCacheTarget.get(targetCacheKey)!;
+        } else {
+          // Generate new label texture
+          const div = `<div class="fire-div" style="
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            padding: 2px 6px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 4px;
+            border: 1px solid #ffffff;
+          ">${e.name}</div>`;
+          const shareContent = document.getElementById("html2canvas");
+          shareContent.innerHTML = div;
+          const opts = {
+            backgroundColor: null,
+            scale: 4,
+            dpi: window.devicePixelRatio,
+          };
+          const canvas = await html2canvas(document.getElementById("html2canvas"), opts);
+          const dataURL = canvas.toDataURL("image/png");
+          map = new TextureLoader().load(dataURL);
+
+          // Cache the texture
+          this.labelCacheTarget.set(targetCacheKey, map);
+        }
+
         const material = new SpriteMaterial({
           map: map,
           transparent: true,
@@ -639,20 +675,26 @@ export default class earth {
   async updateVisualization(newData: options['data']): Promise<void> {
     // Store old data for comparison (outside try block for proper scoping)
     const oldData = this.options.data;
-    
+
     try {
       // Update internal data
       this.options.data = newData;
-      
-      // Clear existing dynamic elements
-      this.clearDynamicElements();
-      
-      // Recreate dynamic elements with new data
-      await this.createMarkupPoint();
-      await this.createSpriteLabel();
-      this.createFlyLine();
-      
-      console.log(`Updated visualization with ${newData.length} attack routes`);
+
+      // Use differential updates if enabled, otherwise full recreation
+      const enableDifferentialUpdates = (this.options as any).enableDifferentialUpdates !== false;
+
+      if (enableDifferentialUpdates && oldData && oldData.length > 0) {
+        // Differential update mode - only update what changed
+        await this.updateVisualizationDifferential(oldData, newData);
+      } else {
+        // Full recreation mode - clear everything and rebuild
+        this.clearDynamicElements();
+        await this.createMarkupPoint();
+        await this.createSpriteLabel();
+        this.createFlyLine();
+      }
+
+      console.log(`Updated visualization with ${newData.length} attack routes (differential: ${enableDifferentialUpdates})`);
     } catch (error) {
       console.error('Failed to update visualization:', error);
       // Fallback: restore old data if update fails
@@ -660,6 +702,35 @@ export default class earth {
         this.options.data = oldData;
       }
     }
+  }
+
+  /**
+   * Differential update - only updates what changed between old and new data
+   * This is much faster than full recreation for incremental changes
+   */
+  private async updateVisualizationDifferential(oldData: options['data'], newData: options['data']): Promise<void> {
+    // Create lookup keys for comparison
+    const createKey = (item: options['data'][0]) => {
+      const targets = item.endArray.map(e => `${e.name}_${e.N}_${e.E}`).sort().join('|');
+      return `${item.startArray.name}_${item.startArray.N}_${item.startArray.E}=>${targets}`;
+    };
+
+    const oldKeys = new Set(oldData.map(createKey));
+    const newKeys = new Set(newData.map(createKey));
+
+    // Check if data is identical
+    if (oldKeys.size === newKeys.size && [...oldKeys].every(k => newKeys.has(k))) {
+      // No changes detected - skip update
+      return;
+    }
+
+    // For simplicity, if changes are detected, do a full update
+    // A more sophisticated implementation could track individual attacks and only update changed ones
+    // However, with label caching, full updates are already much faster
+    this.clearDynamicElements();
+    await this.createMarkupPoint();
+    await this.createSpriteLabel();
+    this.createFlyLine();
   }
 
   /**

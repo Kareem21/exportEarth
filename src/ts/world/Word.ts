@@ -100,6 +100,7 @@ export default class World {
       data: this.option.data || defaultData,
       dom: this.option.dom,
       textures: this.resources.textures,
+      enableDifferentialUpdates: this.option.enableDifferentialUpdates,
       earth: {
         radius: this.option.earth?.radius || 50,
         rotateSpeed: this.option.earth?.rotateSpeed || 0.002,
@@ -123,7 +124,7 @@ export default class World {
         flyLineColor: this.option.flyLine?.flyLineColor || 0xffffff, // White for active attacks
         speed: this.option.flyLine?.speed || 0.015, // Much faster speed for cyber attacks (3.75x original)
       }
-    })
+    } as any)
 
     this.scene.add(this.earth.group)
 

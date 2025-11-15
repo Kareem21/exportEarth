@@ -17,6 +17,9 @@ export interface EarthModuleOptions {
   dom: HTMLElement,
   attackData?: AttackData[], // Optional, defaults to demo data if not provided
   animationSpeed?: number, // Optional, defaults to 1.0 (0.5x to 2x range)
+  maxConcurrentAttacks?: number, // Optional, limits number of attacks shown (default: no limit)
+  updateDebounce?: number, // Optional, debounce updateAttackData calls in ms (default: 0 - no debounce)
+  enableDifferentialUpdates?: boolean, // Optional, enables smart diffing (default: true)
 }
 
 export class EarthModule {
@@ -24,6 +27,8 @@ export class EarthModule {
   private isInitialized = false;
   private html2canvasElement: HTMLElement | null = null;
   private stylesElement: HTMLElement | null = null;
+  private debounceTimer: NodeJS.Timeout | null = null;
+  private options: EarthModuleOptions | null = null;
 
   constructor() {
     // Initialize EarthModule instance
@@ -115,6 +120,14 @@ export class EarthModule {
       throw new Error('DOM element is required for EarthModule initialization');
     }
 
+    // Store options for later use
+    this.options = {
+      ...options,
+      maxConcurrentAttacks: options.maxConcurrentAttacks || 0, // 0 = no limit
+      updateDebounce: options.updateDebounce || 0, // 0 = no debounce
+      enableDifferentialUpdates: options.enableDifferentialUpdates !== false, // default true
+    };
+
     // Create the html2canvas element required for city labels
     this.createHtml2CanvasElement();
 
@@ -134,12 +147,20 @@ export class EarthModule {
       }
     ];
 
-    const attackData = options.attackData || defaultAttackData;
-    const animationSpeed = Math.max(0.5, Math.min(2.0, options.animationSpeed || 2.0));
+    let attackData = this.options.attackData || defaultAttackData;
+
+    // Apply maxConcurrentAttacks limit if specified
+    if (this.options.maxConcurrentAttacks && this.options.maxConcurrentAttacks > 0) {
+      attackData = attackData.slice(0, this.options.maxConcurrentAttacks);
+    }
+
+    const animationSpeed = Math.max(0.5, Math.min(2.0, this.options.animationSpeed || 2.0));
 
     this.world = new World({
-      dom: options.dom,
+      dom: this.options.dom,
       data: attackData,
+      maxConcurrentAttacks: this.options.maxConcurrentAttacks,
+      enableDifferentialUpdates: this.options.enableDifferentialUpdates,
       // Hardcoded settings - keep exact same visual appearance
       earth: {
         radius: 50,
@@ -190,8 +211,28 @@ export class EarthModule {
       return;
     }
 
-    // Update the visualization dynamically without full recreation
-    this.world.earth.updateVisualization(newAttackData);
+    // Apply maxConcurrentAttacks limit if specified
+    let limitedData = newAttackData;
+    if (this.options?.maxConcurrentAttacks && this.options.maxConcurrentAttacks > 0) {
+      limitedData = newAttackData.slice(0, this.options.maxConcurrentAttacks);
+    }
+
+    // Apply debouncing if specified
+    if (this.options?.updateDebounce && this.options.updateDebounce > 0) {
+      // Clear existing timer
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+
+      // Set new timer
+      this.debounceTimer = setTimeout(() => {
+        this.world!.earth.updateVisualization(limitedData);
+        this.debounceTimer = null;
+      }, this.options.updateDebounce);
+    } else {
+      // No debouncing - update immediately
+      this.world.earth.updateVisualization(limitedData);
+    }
   }
 
   /**
@@ -229,17 +270,23 @@ export class EarthModule {
    * Cleanup method for React component unmounting
    */
   destroy(): void {
+    // Clear any pending debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
     if (this.world) {
       // Stop the render loop
       if (this.world.renderer) {
         this.world.renderer.dispose();
       }
-      
+
       // Clean up Three.js resources
       if (this.world.scene) {
         this.world.scene.clear();
       }
-      
+
       this.world = null;
     }
 
@@ -249,12 +296,13 @@ export class EarthModule {
       this.html2canvasElement = null;
     }
 
-    // Clean up styles element  
+    // Clean up styles element
     if (this.stylesElement) {
       this.stylesElement.remove();
       this.stylesElement = null;
     }
 
+    this.options = null;
     this.isInitialized = false;
   }
 
