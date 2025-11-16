@@ -270,6 +270,7 @@ export class EarthModule {
 
   /**
    * Cleanup method for React component unmounting
+   * CRITICAL: Prevents memory leaks by stopping render loop and cleaning up all resources
    */
   destroy(): void {
     // Clear any pending debounce timer
@@ -279,16 +280,12 @@ export class EarthModule {
     }
 
     if (this.world) {
-      // Stop the render loop
-      if (this.world.renderer) {
-        this.world.renderer.dispose();
-      }
-
-      // Clean up Three.js resources
-      if (this.world.scene) {
-        this.world.scene.clear();
-      }
-
+      // Call World's destroy method to properly clean up:
+      // - Cancel requestAnimationFrame loop
+      // - Remove event listeners
+      // - Dispose controls and renderer
+      // - Clean up all Three.js resources
+      this.world.destroy();
       this.world = null;
     }
 

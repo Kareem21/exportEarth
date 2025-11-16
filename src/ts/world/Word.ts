@@ -32,6 +32,8 @@ export default class World {
   // Performance optimization: idle rendering detection
   private lastInteractionTime = Date.now();
   private isRendering = true;
+  private animationFrameId: number | null = null;
+  private controlsChangeHandler: (() => void) | null = null;
 
   constructor(option: IWord) {
     /**
@@ -46,13 +48,14 @@ export default class World {
     this.camera = this.basic.camera
 
     // Track user interaction for idle rendering optimization
-    this.controls.addEventListener('change', () => {
+    this.controlsChangeHandler = () => {
       this.lastInteractionTime = Date.now();
       if (!this.isRendering) {
         this.isRendering = true;
         this.render();
       }
-    });
+    };
+    this.controls.addEventListener('change', this.controlsChangeHandler);
 
     this.sizes = new Sizes({ dom: option.dom })
 
@@ -164,12 +167,66 @@ export default class World {
       this.renderer.render(this.scene, this.camera);
       this.controls && this.controls.update();
       this.earth && this.earth.render();
+      this.animationFrameId = null;
       return;
     }
 
-    requestAnimationFrame(this.render.bind(this))
+    this.animationFrameId = requestAnimationFrame(this.render.bind(this))
     this.renderer.render(this.scene, this.camera)
     this.controls && this.controls.update()
     this.earth && this.earth.render()
+  }
+
+  /**
+   * Cleanup method to prevent memory leaks
+   */
+  public destroy(): void {
+    // Cancel animation frame loop
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    // Remove event listener
+    if (this.controlsChangeHandler && this.controls) {
+      this.controls.removeEventListener('change', this.controlsChangeHandler);
+      this.controlsChangeHandler = null;
+    }
+
+    // Dispose controls
+    if (this.controls) {
+      this.controls.dispose();
+    }
+
+    // Dispose renderer
+    if (this.renderer) {
+      this.renderer.dispose();
+      // Remove canvas from DOM
+      if (this.renderer.domElement && this.renderer.domElement.parentNode) {
+        this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+      }
+    }
+
+    // Clean up earth
+    if (this.earth) {
+      // Earth class should have its own cleanup if needed
+      this.earth = null as any;
+    }
+
+    // Clean up scene
+    if (this.scene) {
+      this.scene.clear();
+      this.scene = null as any;
+    }
+
+    // Clean up sizes
+    if (this.sizes) {
+      this.sizes = null as any;
+    }
+
+    // Clean up resources
+    if (this.resources) {
+      this.resources = null as any;
+    }
   }
 }
