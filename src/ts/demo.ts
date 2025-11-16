@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('  ✅ Debouncing (500ms)');
     console.log('  ✅ Attack limiting (max 20)');
     console.log('  ✅ Fast dot speed (0.030 - 2x faster)');
+    console.log('  ✅ Smooth fade transitions (300ms fade out/in)');
+    console.log('  ✅ Update lock (prevents race conditions)');
 
     // DEMONSTRATION: Simulate real-time SIEM updates
     // This will show label caching & differential updates in action

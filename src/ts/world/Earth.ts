@@ -93,6 +93,9 @@ export default class earth {
   private labelCacheAttacker: Map<string, Texture>;
   private labelCacheTarget: Map<string, Texture>;
 
+  // Update lock to prevent concurrent updates
+  private isUpdating = false;
+
   constructor(options: options) {
 
     this.options = options;
@@ -669,12 +672,136 @@ export default class earth {
   }
 
   /**
+   * Fade out attack elements smoothly
+   * @param duration Fade duration in milliseconds
+   */
+  private async fadeOutAttacks(duration: number): Promise<void> {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const startOpacities = new Map<any, number>();
+
+      // Store initial opacities
+      const collectOpacities = (obj: any) => {
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((mat: any) => {
+              if (mat.transparent !== undefined) {
+                startOpacities.set(mat, mat.opacity || 1);
+                mat.transparent = true; // Enable transparency
+              }
+            });
+          } else if (obj.material.transparent !== undefined) {
+            startOpacities.set(obj.material, obj.material.opacity || 1);
+            obj.material.transparent = true;
+          }
+        }
+      };
+
+      this.markupPoint?.children.forEach(collectOpacities);
+      this.flyLineArcGroup?.children.forEach(collectOpacities);
+      this.earth?.children.forEach((child) => {
+        if (child.type === 'Sprite') {
+          collectOpacities(child);
+        }
+      });
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const opacity = 1 - progress; // Fade from 1 to 0
+
+        // Apply opacity to all materials
+        startOpacities.forEach((startOpacity, material) => {
+          material.opacity = opacity * startOpacity;
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          resolve();
+        }
+      };
+
+      animate();
+    });
+  }
+
+  /**
+   * Fade in attack elements smoothly
+   * @param duration Fade duration in milliseconds
+   */
+  private async fadeInAttacks(duration: number): Promise<void> {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const targetOpacities = new Map<any, number>();
+
+      // Collect all materials and set initial opacity to 0
+      const collectMaterials = (obj: any) => {
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((mat: any) => {
+              if (mat.transparent !== undefined) {
+                targetOpacities.set(mat, mat.opacity || 1);
+                mat.opacity = 0;
+                mat.transparent = true;
+              }
+            });
+          } else if (obj.material.transparent !== undefined) {
+            targetOpacities.set(obj.material, obj.material.opacity || 1);
+            obj.material.opacity = 0;
+            obj.material.transparent = true;
+          }
+        }
+      };
+
+      this.markupPoint?.children.forEach(collectMaterials);
+      this.flyLineArcGroup?.children.forEach(collectMaterials);
+      this.earth?.children.forEach((child) => {
+        if (child.type === 'Sprite') {
+          collectMaterials(child);
+        }
+      });
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Apply opacity fade in
+        targetOpacities.forEach((targetOpacity, material) => {
+          material.opacity = progress * targetOpacity;
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Restore final opacities
+          targetOpacities.forEach((targetOpacity, material) => {
+            material.opacity = targetOpacity;
+          });
+          resolve();
+        }
+      };
+
+      animate();
+    });
+  }
+
+  /**
    * Update visualization with new attack data without full recreation
    * @param newData New attack data to visualize
    */
   async updateVisualization(newData: options['data']): Promise<void> {
+    // Prevent concurrent updates (race condition protection)
+    if (this.isUpdating) {
+      console.warn('⚠️  Update already in progress, skipping to prevent race condition');
+      return;
+    }
+
     // Store old data for comparison (outside try block for proper scoping)
     const oldData = this.options.data;
+
+    // Acquire update lock
+    this.isUpdating = true;
 
     try {
       // Update internal data
@@ -687,20 +814,33 @@ export default class earth {
         // Differential update mode - only update what changed
         await this.updateVisualizationDifferential(oldData, newData);
       } else {
-        // Full recreation mode - clear everything and rebuild
+        // Full recreation mode with smooth fade transitions
+
+        // Step 1: Fade out existing attacks (300ms)
+        await this.fadeOutAttacks(300);
+
+        // Step 2: Clear elements while invisible
         this.clearDynamicElements();
+
+        // Step 3: Rebuild with new data
         await this.createMarkupPoint();
         await this.createSpriteLabel();
         this.createFlyLine();
+
+        // Step 4: Fade in new attacks (300ms)
+        await this.fadeInAttacks(300);
       }
 
-      console.log(`Updated visualization with ${newData.length} attack routes (differential: ${enableDifferentialUpdates})`);
+      console.log(`✅ Updated visualization with ${newData.length} attack routes (differential: ${enableDifferentialUpdates})`);
     } catch (error) {
-      console.error('Failed to update visualization:', error);
+      console.error('❌ Failed to update visualization:', error);
       // Fallback: restore old data if update fails
       if (oldData) {
         this.options.data = oldData;
       }
+    } finally {
+      // Always release lock, even if error occurred
+      this.isUpdating = false;
     }
   }
 
@@ -720,17 +860,22 @@ export default class earth {
 
     // Check if data is identical
     if (oldKeys.size === newKeys.size && [...oldKeys].every(k => newKeys.has(k))) {
-      // No changes detected - skip update
+      // No changes detected - skip update entirely
+      console.log('🔄 No changes detected - skipping update (differential optimization)');
       return;
     }
 
-    // For simplicity, if changes are detected, do a full update
+    // For simplicity, if changes are detected, do a full update with fade transitions
     // A more sophisticated implementation could track individual attacks and only update changed ones
     // However, with label caching, full updates are already much faster
+
+    // Fade out -> update -> fade in for smooth transition
+    await this.fadeOutAttacks(300);
     this.clearDynamicElements();
     await this.createMarkupPoint();
     await this.createSpriteLabel();
     this.createFlyLine();
+    await this.fadeInAttacks(300);
   }
 
   /**
