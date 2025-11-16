@@ -82,6 +82,11 @@ module.exports = {
         test: /\.(glsl|vs|fs)$/,
         loader: 'ts-shader-loader',
       },
+      // Images
+      {
+        test: /\.(png|jpe?g|gif)$/i,
+        type: 'asset/resource',
+      },
     ],
   },
 
