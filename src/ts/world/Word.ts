@@ -29,6 +29,9 @@ export default class World {
   public option: IWord;
   public earth: Earth;
 
+  // Performance optimization: idle rendering detection
+  private lastInteractionTime = Date.now();
+  private isRendering = true;
 
   constructor(option: IWord) {
     /**
@@ -41,6 +44,15 @@ export default class World {
     this.renderer = this.basic.renderer
     this.controls = this.basic.controls
     this.camera = this.basic.camera
+
+    // Track user interaction for idle rendering optimization
+    this.controls.addEventListener('change', () => {
+      this.lastInteractionTime = Date.now();
+      if (!this.isRendering) {
+        this.isRendering = true;
+        this.render();
+      }
+    });
 
     this.sizes = new Sizes({ dom: option.dom })
 
@@ -139,9 +151,22 @@ export default class World {
   }
 
   /**
-   * Render function
+   * Render function with idle detection for performance
    */
   public render() {
+    // Check if user has stopped interacting (idle for 2 seconds)
+    const timeSinceInteraction = Date.now() - this.lastInteractionTime;
+
+    // Keep rendering for 2 seconds after last interaction, or if animations are active
+    if (timeSinceInteraction > 2000) {
+      this.isRendering = false;
+      // Render one final frame then stop
+      this.renderer.render(this.scene, this.camera);
+      this.controls && this.controls.update();
+      this.earth && this.earth.render();
+      return;
+    }
+
     requestAnimationFrame(this.render.bind(this))
     this.renderer.render(this.scene, this.camera)
     this.controls && this.controls.update()

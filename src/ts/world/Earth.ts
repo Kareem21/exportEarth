@@ -340,6 +340,8 @@ export default class earth {
   }
 
   async createMarkupPoint() {
+    // Maximum wave meshes to prevent memory accumulation
+    const MAX_WAVE_MESHES = 60;
 
     await Promise.all(this.options.data.map(async (item) => {
 
@@ -389,6 +391,25 @@ export default class earth {
       }))
       this.earthGroup.add(this.markupPoint)
     }))
+
+    // Limit wave mesh count to prevent memory buildup
+    if (this.waveMeshArr.length > MAX_WAVE_MESHES) {
+      const removeCount = this.waveMeshArr.length - MAX_WAVE_MESHES;
+      const toRemove = this.waveMeshArr.splice(0, removeCount);
+
+      toRemove.forEach((waveMesh: any) => {
+        if (waveMesh.parent) {
+          waveMesh.parent.remove(waveMesh);
+        }
+        if (waveMesh.material) {
+          if (waveMesh.material.map) waveMesh.material.map.dispose();
+          waveMesh.material.dispose();
+        }
+        if (waveMesh.geometry) {
+          waveMesh.geometry.dispose();
+        }
+      });
+    }
   }
 
   async createSpriteLabel() {
@@ -880,22 +901,38 @@ export default class earth {
 
   /**
    * Clear all dynamic 3D elements that depend on attack data
+   * Enhanced with proper texture disposal to prevent memory leaks
    */
   private clearDynamicElements(): void {
+    // Helper function to dispose materials with textures
+    const disposeMaterial = (material: any) => {
+      if (!material) return;
+
+      // Dispose textures (CRITICAL for memory management)
+      if (material.map) material.map.dispose();
+      if (material.lightMap) material.lightMap.dispose();
+      if (material.bumpMap) material.bumpMap.dispose();
+      if (material.normalMap) material.normalMap.dispose();
+      if (material.specularMap) material.specularMap.dispose();
+      if (material.envMap) material.envMap.dispose();
+      if (material.alphaMap) material.alphaMap.dispose();
+
+      // Dispose material itself
+      if (material.dispose) material.dispose();
+    };
+
     // Clear city markers and related elements
     if (this.markupPoint) {
-      // Remove all children from markup point group
       while (this.markupPoint.children.length > 0) {
         const child = this.markupPoint.children[0];
         this.markupPoint.remove(child);
-        
-        // Dispose of materials and geometries to prevent memory leaks
+
         const childWithMaterial = child as any;
         if (childWithMaterial.material) {
           if (Array.isArray(childWithMaterial.material)) {
-            childWithMaterial.material.forEach((mat: any) => mat.dispose && mat.dispose());
+            childWithMaterial.material.forEach(disposeMaterial);
           } else {
-            childWithMaterial.material.dispose && childWithMaterial.material.dispose();
+            disposeMaterial(childWithMaterial.material);
           }
         }
         if (childWithMaterial.geometry) {
@@ -906,48 +943,55 @@ export default class earth {
 
     // Clear flight lines
     if (this.flyLineArcGroup) {
-      // Remove all children from flight line group
       while (this.flyLineArcGroup.children.length > 0) {
         const child = this.flyLineArcGroup.children[0];
         this.flyLineArcGroup.remove(child);
-        
-        // Dispose of materials and geometries
+
         const childWithMaterial = child as any;
         if (childWithMaterial.material) {
           if (Array.isArray(childWithMaterial.material)) {
-            childWithMaterial.material.forEach((mat: any) => mat.dispose && mat.dispose());
+            childWithMaterial.material.forEach(disposeMaterial);
           } else {
-            childWithMaterial.material.dispose && childWithMaterial.material.dispose();
+            disposeMaterial(childWithMaterial.material);
           }
         }
         if (childWithMaterial.geometry) {
           childWithMaterial.geometry.dispose && childWithMaterial.geometry.dispose();
         }
       }
-      
-      // Clear flight line array
+
       this.flyLineArcGroup.userData['flyLineArray'] = [];
     }
 
     // Clear city labels from earth
     if (this.earth) {
-      // Remove sprite labels that were added directly to earth
       const spritesToRemove: any[] = [];
       this.earth.traverse((child) => {
         if (child.type === 'Sprite') {
           spritesToRemove.push(child);
         }
       });
-      
+
       spritesToRemove.forEach(sprite => {
         this.earth.remove(sprite);
         if (sprite.material) {
-          sprite.material.dispose();
+          disposeMaterial(sprite.material);
         }
       });
     }
 
-    // Clear wave mesh array
+    // Clear wave meshes with proper disposal
+    this.waveMeshArr.forEach((waveMesh: any) => {
+      if (waveMesh.parent) {
+        waveMesh.parent.remove(waveMesh);
+      }
+      if (waveMesh.material) {
+        disposeMaterial(waveMesh.material);
+      }
+      if (waveMesh.geometry) {
+        waveMesh.geometry.dispose && waveMesh.geometry.dispose();
+      }
+    });
     this.waveMeshArr = [];
   }
 
