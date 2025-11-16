@@ -44,10 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // - maxConcurrentAttacks: limits attacks shown
     // - updateDebounce: batches rapid updates
     // - enableDifferentialUpdates: smart diffing
+    // - flyLineSpeed: controls speed of attack dots
     await earthModule.init({
       dom: canvasContainer,
       attackData: customAttackData,
       animationSpeed: 1.5,
+      flyLineSpeed: 0.030,            // Test: 2x faster dots (default: 0.015)
       maxConcurrentAttacks: 20,      // Test: limit to 20 attacks
       updateDebounce: 500,            // Test: debounce updates by 500ms
       enableDifferentialUpdates: true // Test: skip updates if data unchanged
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('  ✅ Differential updates (skips if data unchanged)');
     console.log('  ✅ Debouncing (500ms)');
     console.log('  ✅ Attack limiting (max 20)');
+    console.log('  ✅ Fast dot speed (0.030 - 2x faster)');
 
     // DEMONSTRATION: Simulate real-time SIEM updates
     // This will show label caching & differential updates in action

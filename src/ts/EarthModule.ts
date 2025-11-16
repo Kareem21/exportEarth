@@ -17,6 +17,7 @@ export interface EarthModuleOptions {
   dom: HTMLElement,
   attackData?: AttackData[], // Optional, defaults to demo data if not provided
   animationSpeed?: number, // Optional, defaults to 1.0 (0.5x to 2x range)
+  flyLineSpeed?: number, // Optional, speed of moving dots on flight lines (default: 0.015, range: 0.005-0.1)
   maxConcurrentAttacks?: number, // Optional, limits number of attacks shown (default: no limit)
   updateDebounce?: number, // Optional, debounce updateAttackData calls in ms (default: 0 - no debounce)
   enableDifferentialUpdates?: boolean, // Optional, enables smart diffing (default: true)
@@ -155,6 +156,7 @@ export class EarthModule {
     }
 
     const animationSpeed = Math.max(0.5, Math.min(2.0, this.options.animationSpeed || 2.0));
+    const flyLineSpeed = Math.max(0.001, Math.min(0.1, this.options.flyLineSpeed || 0.015));
 
     this.world = new World({
       dom: this.options.dom,
@@ -183,7 +185,7 @@ export class EarthModule {
       flyLine: {
         color: 0xffffff,
         flyLineColor: 0xffffff,
-        speed: 0.004 * animationSpeed,
+        speed: flyLineSpeed,
       }
     });
 
