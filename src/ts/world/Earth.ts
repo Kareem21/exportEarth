@@ -995,5 +995,68 @@ export default class earth {
     this.waveMeshArr = [];
   }
 
+  /**
+   * Destroy method to clean up all resources and prevent memory leaks
+   * CRITICAL: Disposes all cached textures that would otherwise persist
+   */
+  public destroy(): void {
+    // Clear all dynamic elements (markers, flight lines, labels, waves)
+    this.clearDynamicElements();
+
+    // Dispose ALL cached label textures (CRITICAL - prevents GPU memory leak)
+    this.labelCacheAttacker.forEach((texture) => {
+      if (texture) texture.dispose();
+    });
+    this.labelCacheAttacker.clear();
+
+    this.labelCacheTarget.forEach((texture) => {
+      if (texture) texture.dispose();
+    });
+    this.labelCacheTarget.clear();
+
+    this.labelCache.forEach((texture) => {
+      if (texture) texture.dispose();
+    });
+    this.labelCache.clear();
+
+    // Dispose earth materials and geometries
+    if (this.earth) {
+      if (this.earth.material) {
+        if (Array.isArray(this.earth.material)) {
+          this.earth.material.forEach((mat: any) => {
+            if (mat.map) mat.map.dispose();
+            mat.dispose();
+          });
+        } else {
+          if ((this.earth.material as any).map) (this.earth.material as any).map.dispose();
+          this.earth.material.dispose();
+        }
+      }
+      if (this.earth.geometry) {
+        this.earth.geometry.dispose();
+      }
+    }
+
+    // Dispose punctuation material
+    if (this.punctuationMaterial) {
+      if (this.punctuationMaterial.map) this.punctuationMaterial.map.dispose();
+      this.punctuationMaterial.dispose();
+    }
+
+    // Clear groups
+    if (this.group) {
+      this.group.clear();
+    }
+    if (this.earthGroup) {
+      this.earthGroup.clear();
+    }
+    if (this.markupPoint) {
+      this.markupPoint.clear();
+    }
+    if (this.flyLineArcGroup) {
+      this.flyLineArcGroup.clear();
+    }
+  }
+
 
 }

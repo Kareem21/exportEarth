@@ -207,9 +207,9 @@ export default class World {
       }
     }
 
-    // Clean up earth
+    // Clean up earth (dispose all cached textures!)
     if (this.earth) {
-      // Earth class should have its own cleanup if needed
+      this.earth.destroy();  // ← CRITICAL: Disposes label cache textures
       this.earth = null as any;
     }
 
