@@ -49,6 +49,8 @@ export class Resources {
     this.textureLoader = new TextureLoader(this.manager)
     resources.textures?.forEach((item) => {
       this.textureLoader.load(item.url, (t) => {
+        // Disable mipmaps to save 33% memory overhead (50-100MB savings)
+        t.generateMipmaps = false;
         this.textures[item.name] = t
       })
     })

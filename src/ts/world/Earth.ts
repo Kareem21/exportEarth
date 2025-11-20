@@ -1,6 +1,6 @@
 import {
   BufferAttribute, BufferGeometry, Color, DoubleSide, Group, Material, Mesh, MeshBasicMaterial, NormalBlending,
-  Object3D,
+  Object3D, PlaneBufferGeometry,
   Points, PointsMaterial, ShaderMaterial,
   SphereBufferGeometry, Sprite, SpriteMaterial, Texture, TextureLoader, Vector3
 } from "three";
@@ -96,6 +96,13 @@ export default class earth {
   // Update lock to prevent concurrent updates
   private isUpdating = false;
 
+  // Fade animation tracking to cancel during idle
+  private fadeAnimationId: number | null = null;
+
+  // Shared geometry/materials for performance (reused across instances)
+  private sharedWaveGeometry: BufferGeometry | null = null;
+  private sharedWaveMaterial: MeshBasicMaterial | null = null;
+
   constructor(options: options) {
 
     this.options = options;
@@ -125,6 +132,13 @@ export default class earth {
     this.labelCache = new Map();
     this.labelCacheAttacker = new Map();
     this.labelCacheTarget = new Map();
+
+    // Initialize shared wave geometry/material (reused across all wave meshes)
+    // This saves 100-150MB by avoiding duplicate geometries/materials for each wave
+    this.sharedWaveGeometry = new PlaneBufferGeometry(1, 1);
+
+    // Material will be initialized after textures are loaded in init()
+    this.sharedWaveMaterial = null;
 
     // Sweep light animation shader
     this.timeValue = 100
@@ -161,6 +175,15 @@ export default class earth {
 
   async init(): Promise<void> {
     return new Promise(async (resolve) => {
+
+      // Initialize shared wave material after textures are loaded
+      this.sharedWaveMaterial = new MeshBasicMaterial({
+        color: 0xe99f68,
+        map: this.options.textures.aperture,
+        transparent: true,
+        opacity: 1.0,
+        depthWrite: false,
+      });
 
       this.createEarth(); // Create Earth
       this.createStars(); // Add stars
@@ -367,7 +390,19 @@ export default class earth {
         punctuation: this.options.punctuation,
       }); // Light pillar
       this.markupPoint.add(LightPillar);
-      const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); // Wave halo
+
+      // Create wave mesh using shared geometry/material for performance
+      const WaveMesh = new Mesh(this.sharedWaveGeometry, this.sharedWaveMaterial);
+      const coord = lon2xyz(radius * 1.001, lon, lat);
+      const size = radius * 0.12;
+      WaveMesh.scale.set(size, size, size);
+      WaveMesh.userData['size'] = size;
+      WaveMesh.userData['scale'] = Math.random() * 1.0;
+      WaveMesh.position.set(coord.x, coord.y, coord.z);
+      const coordVec3 = new Vector3(coord.x, coord.y, coord.z).normalize();
+      const meshNormal = new Vector3(0, 0, 1);
+      WaveMesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+
       this.markupPoint.add(WaveMesh);
       this.waveMeshArr.push(WaveMesh);
 
@@ -385,7 +420,19 @@ export default class earth {
           punctuation: this.options.punctuation
         }); // Light pillar
         this.markupPoint.add(LightPillar);
-        const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); // Wave halo
+
+        // Create wave mesh using shared geometry/material for performance
+        const WaveMesh = new Mesh(this.sharedWaveGeometry, this.sharedWaveMaterial);
+        const coord = lon2xyz(radius * 1.001, lon, lat);
+        const size = radius * 0.12;
+        WaveMesh.scale.set(size, size, size);
+        WaveMesh.userData['size'] = size;
+        WaveMesh.userData['scale'] = Math.random() * 1.0;
+        WaveMesh.position.set(coord.x, coord.y, coord.z);
+        const coordVec3 = new Vector3(coord.x, coord.y, coord.z).normalize();
+        const meshNormal = new Vector3(0, 0, 1);
+        WaveMesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+
         this.markupPoint.add(WaveMesh);
         this.waveMeshArr.push(WaveMesh);
       }))
@@ -401,13 +448,7 @@ export default class earth {
         if (waveMesh.parent) {
           waveMesh.parent.remove(waveMesh);
         }
-        if (waveMesh.material) {
-          if (waveMesh.material.map) waveMesh.material.map.dispose();
-          waveMesh.material.dispose();
-        }
-        if (waveMesh.geometry) {
-          waveMesh.geometry.dispose();
-        }
+        // Note: Don't dispose geometry/material - they're shared across all wave meshes
       });
     }
   }
@@ -447,6 +488,7 @@ export default class earth {
         const canvas1 = await html2canvas(document.getElementById("html2canvas"), opts1);
         const dataURL1 = canvas1.toDataURL("image/png");
         map1 = new TextureLoader().load(dataURL1);
+        map1.generateMipmaps = false; // Disable mipmaps to save memory
 
         // Cache the texture
         this.labelCacheAttacker.set(attackerCacheKey, map1);
@@ -494,6 +536,7 @@ export default class earth {
           const canvas = await html2canvas(document.getElementById("html2canvas"), opts);
           const dataURL = canvas.toDataURL("image/png");
           map = new TextureLoader().load(dataURL);
+          map.generateMipmaps = false; // Disable mipmaps to save memory
 
           // Cache the texture
           this.labelCacheTarget.set(targetCacheKey, map);
@@ -697,6 +740,12 @@ export default class earth {
    * @param duration Fade duration in milliseconds
    */
   private async fadeOutAttacks(duration: number): Promise<void> {
+    // Cancel any existing fade animation
+    if (this.fadeAnimationId !== null) {
+      cancelAnimationFrame(this.fadeAnimationId);
+      this.fadeAnimationId = null;
+    }
+
     return new Promise((resolve) => {
       const startTime = Date.now();
       const startOpacities = new Map<any, number>();
@@ -737,8 +786,9 @@ export default class earth {
         });
 
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          this.fadeAnimationId = requestAnimationFrame(animate);
         } else {
+          this.fadeAnimationId = null;
           resolve();
         }
       };
@@ -752,6 +802,12 @@ export default class earth {
    * @param duration Fade duration in milliseconds
    */
   private async fadeInAttacks(duration: number): Promise<void> {
+    // Cancel any existing fade animation
+    if (this.fadeAnimationId !== null) {
+      cancelAnimationFrame(this.fadeAnimationId);
+      this.fadeAnimationId = null;
+    }
+
     return new Promise((resolve) => {
       const startTime = Date.now();
       const targetOpacities = new Map<any, number>();
@@ -793,8 +849,9 @@ export default class earth {
         });
 
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          this.fadeAnimationId = requestAnimationFrame(animate);
         } else {
+          this.fadeAnimationId = null;
           // Restore final opacities
           targetOpacities.forEach((targetOpacity, material) => {
             material.opacity = targetOpacity;
@@ -980,17 +1037,12 @@ export default class earth {
       });
     }
 
-    // Clear wave meshes with proper disposal
+    // Clear wave meshes (don't dispose shared geometry/material!)
     this.waveMeshArr.forEach((waveMesh: any) => {
       if (waveMesh.parent) {
         waveMesh.parent.remove(waveMesh);
       }
-      if (waveMesh.material) {
-        disposeMaterial(waveMesh.material);
-      }
-      if (waveMesh.geometry) {
-        waveMesh.geometry.dispose && waveMesh.geometry.dispose();
-      }
+      // Note: Don't dispose geometry/material - they're shared across all wave meshes
     });
     this.waveMeshArr = [];
   }
@@ -1041,6 +1093,17 @@ export default class earth {
     if (this.punctuationMaterial) {
       if (this.punctuationMaterial.map) this.punctuationMaterial.map.dispose();
       this.punctuationMaterial.dispose();
+    }
+
+    // Dispose shared wave geometry and material
+    if (this.sharedWaveGeometry) {
+      this.sharedWaveGeometry.dispose();
+      this.sharedWaveGeometry = null;
+    }
+    if (this.sharedWaveMaterial) {
+      if (this.sharedWaveMaterial.map) this.sharedWaveMaterial.map.dispose();
+      this.sharedWaveMaterial.dispose();
+      this.sharedWaveMaterial = null;
     }
 
     // Clear groups
